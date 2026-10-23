@@ -10,7 +10,7 @@
     main{max-width:620px;margin:2vh auto}header{display:flex;align-items:center;gap:12px;margin-bottom:22px}.mark{width:46px;height:46px;border:1px solid #806b32;border-radius:13px;display:grid;place-items:center;color:var(--gold);font-weight:900;background:#171612}.brand{font-size:14px;letter-spacing:1.5px;font-weight:850}.tagline{font-size:10px;letter-spacing:2px;color:var(--gold);margin-top:2px}
     .hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin:14px 0}.hero{border-color:#4a3d1c;background:radial-gradient(ellipse at top right,#302817 0%,#171612 45%,#141415 85%)}.eyebrow{color:var(--gold);font-size:11px;letter-spacing:2px;font-weight:800}.hero h1{font-size:27px;line-height:1.18;margin:10px 0}.price{font-size:34px;font-weight:900;color:#f0d889;margin:12px 0 4px}.muted,p{color:var(--muted)}h2{font-size:18px;margin:0 0 10px}p{font-size:13px;margin:5px 0 12px}.notice{padding:12px;border-radius:12px;background:#211c10;border:1px solid #514323;font-size:12px;color:#ddc88f;margin-top:14px}.state{font-size:13px;color:var(--muted);overflow-wrap:anywhere;margin-top:10px}.hidden{display:none!important}
     label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}input{width:100%;background:#0e0e0f;color:var(--text);border:1px solid #49494c;border-radius:10px;padding:12px;font-size:16px}
-    button{border:0;border-radius:11px;padding:13px 16px;font-weight:800;cursor:pointer;width:100%;margin:8px 0 0;background:var(--gold);color:#15130d;font-size:15px}button.alt{background:#28282b;color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.44;cursor:not-allowed}.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.provider{background:#1c1a14;color:var(--gold2,#f0d889);border:1px solid #594b2b}.foot{font-size:11px;color:#7e7e80;margin:18px 3px}.error{color:var(--danger)}@media(max-width:450px){body{padding:15px}.hero,.card{padding:16px}.price{font-size:30px}.split{grid-template-columns:1fr}}
+    button{border:0;border-radius:11px;padding:13px 16px;font-weight:800;cursor:pointer;width:100%;margin:8px 0 0;background:var(--gold);color:#15130d;font-size:15px}button.alt{background:#28282b;color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.44;cursor:not-allowed}.split{display:grid;grid-template-columns:1fr;gap:10px}.provider{background:#1c1a14;color:var(--gold2,#f0d889);border:1px solid #594b2b}.foot{font-size:11px;color:#7e7e80;margin:18px 3px}.error{color:var(--danger)}@media(max-width:450px){body{padding:15px}.hero,.card{padding:16px}.price{font-size:30px}.split{grid-template-columns:1fr}}
   </style>
 </head>
 <body><main>
@@ -32,13 +32,10 @@
   </section>
   <section class="card">
     <h2>2. To‘lov usulini tanlang</h2>
-    <p>Yagona narx: <strong>250 000 so‘m</strong>. Click yoki Payme checkout merchant testlari va ruxsatlari to‘liq yakunlangandan keyin faollashtiriladi.</p>
-    <div class="split">
-      <button class="provider" id="click-pay" disabled>Click orqali to‘lash</button>
-      <button class="provider" id="payme-pay" disabled>Payme orqali to‘lash</button>
-    </div>
+    <p>Yagona narx: <strong>250 000 so‘m</strong>. Click orqali to‘lov merchant tasdiqlanishi va testlar yakunlangandan keyin faollashtiriladi.</p>
+    <button class="provider" id="click-pay" disabled>Click orqali to‘lash</button>
     <div id="checkout-state" class="state" aria-live="polite">Hozircha haqiqiy to‘lov o‘chirilgan. Testlar yakunlanmaguncha tugmalar faol bo‘lmaydi.</div>
-    <div class="notice">Bu mustaqil tashqi veb-sahifa. Uni oddiy brauzerda oching; Telegram Mini App ichida Click/Payme orqali raqamli kurs xaridi taklif qilinmaydi.</div>
+    <div class="notice">Bu mustaqil tashqi veb-sahifa. Uni oddiy brauzerda oching; Telegram Mini App ichida Click orqali raqamli kurs xaridi taklif qilinmaydi.</div>
   </section>
   <section class="card">
     <h2>3. Buyurtma holatini tekshirish</h2>
@@ -63,8 +60,7 @@
     const { data: { session }, error } = await client.auth.getSession();
     if (error) message('auth-state', error.message, true);
     $('click-pay').disabled = !session || !CHECKOUT_ENABLED;
-    $('payme-pay').disabled = !session || !CHECKOUT_ENABLED;
-    $('signout').classList.toggle('hidden', !session);
+        $('signout').classList.toggle('hidden', !session);
     if (session) {
       message('auth-state', `Tizimga kirilgan: ${session.user.email || 'foydalanuvchi'}`);
     } else {
@@ -100,8 +96,7 @@
     } catch (e) { message('checkout-state', e.message || 'Noma’lum xatolik.', true); }
   }
   $('click-pay').addEventListener('click', () => startPayment('click'));
-  $('payme-pay').addEventListener('click', () => startPayment('payme'));
-  $('check-status').addEventListener('click', async () => {
+    $('check-status').addEventListener('click', async () => {
     const session = await refreshSession();
     if (!session) return message('status-state', 'Avval shu brauzerda akkauntingizga kiring.', true);
     const orderId = $('order-id').value.trim();
