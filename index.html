@@ -24,6 +24,16 @@
     #admin-tools.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
     #admin-tools[hidden]{display:none!important}
 
+    .admin-enrollment-list{display:grid;gap:10px;margin-top:12px}
+    .admin-enrollment-item{border:1px solid var(--line);background:#111113;border-radius:13px;padding:12px}
+    .admin-enrollment-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .admin-enrollment-name{font-size:13px;font-weight:800;overflow-wrap:anywhere}
+    .admin-enrollment-meta{color:var(--muted);font-size:11px;line-height:1.5;margin-top:5px;overflow-wrap:anywhere}
+    .admin-revoke-btn{width:100%;margin-top:10px;border:1px solid #7c3434;background:#281516;color:#ffb4b4;border-radius:10px;padding:10px 12px;font-weight:750}
+    .admin-revoke-btn:disabled{opacity:.5;cursor:wait}
+    #admin-enrollments-panel.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
+    #admin-enrollments-panel[hidden]{display:none!important}
+
     /* Markazda joylashgan, mobil qurilmalarga mos video player */
     .video-shell{display:none;width:100%;max-width:520px;margin:18px auto 22px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;text-align:center;box-shadow:0 10px 28px #0003}
     .video-shell.active{display:block}
@@ -78,6 +88,14 @@
   <main id="profile-screen" class="screen">
     <div class="section-head"><h3>Mening profilim</h3><span class="subtle">O‘quvchi kabineti</span></div>
     <section class="profile-box"><div class="big-avatar" id="profile-avatar">B</div><h3 id="profile-name">BBSS o‘quvchisi</h3><p id="profile-username">Telegram profili aniqlanmagan</p><div style="height:18px"></div><div class="info-row"><span>Akkaunt ID</span><strong id="profile-id">Demo rejim</strong></div><div class="info-row"><span>Kurs holati</span><strong style="color:var(--gold)" id="course-status">Kirish kutilmoqda</strong></div><div class="info-row"><span>Faol modullar</span><strong>0 / 3</strong></div></section>
+    <section class="course-card admin-tools" id="admin-enrollments-panel" hidden aria-hidden="true" aria-live="polite">
+      <div class="course-label">ADMIN BOSHQARUVI</div>
+      <h4>Ruxsat berilgan o‘quvchilar</h4>
+      <p>Bu ro‘yxatda kursga faol kirish huquqi berilgan o‘quvchilar ko‘rsatiladi. Kerak bo‘lsa, ruxsatni bekor qilishingiz mumkin.</p>
+      <button class="secondary" id="refresh-enrollments-btn" type="button">Ro‘yxatni yangilash</button>
+      <div class="note" id="admin-enrollments-note" aria-live="polite">Ro‘yxat yuklanmoqda…</div>
+      <div class="admin-enrollment-list" id="admin-enrollments-list"><div class="empty">Ro‘yxat yuklanmoqda…</div></div>
+    </section>
     <div class="note">Telegram ichida ochilganda profil ma’lumotlari ko‘rsatilishi mumkin. Haqiqiy kirish huquqi serverda tekshirilishi shart.</div>
     <button class="secondary" onclick="showToast('Admin bilan aloqa havolasi keyingi bosqichda sozlanadi.')">Admin bilan bog‘lanish</button>
   </main>
@@ -114,6 +132,7 @@
     document.getElementById(screen+'-screen').classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===screen));
     window.scrollTo({top:0, behavior:'smooth'});
+    if (screen === 'profile' && isAdminPreview) loadAdminEnrollments();
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
@@ -192,22 +211,24 @@
   }
 
   function updateAdminTools() {
-    const panel = document.getElementById('admin-tools');
-    if (!panel) {
-      console.error('BBSS admin panel element #admin-tools topilmadi. index.html yangilanganini tekshiring.');
-      return;
-    }
     const shouldShow = isAdminPreview === true;
-    panel.hidden = !shouldShow;
-    panel.setAttribute('aria-hidden', String(!shouldShow));
-    panel.classList.toggle('admin-visible', shouldShow);
-    // Telegram WebView'da eski inline style/cache sabab panel yashirin qolmasin.
-    if (shouldShow) {
-      panel.removeAttribute('style');
-      panel.hidden = false;
-    } else {
-      panel.style.removeProperty('display');
-    }
+    ['admin-tools', 'admin-enrollments-panel'].forEach((id) => {
+      const panel = document.getElementById(id);
+      if (!panel) {
+        console.error(`BBSS admin panel element #${id} topilmadi. index.html yangilanganini tekshiring.`);
+        return;
+      }
+      panel.hidden = !shouldShow;
+      panel.setAttribute('aria-hidden', String(!shouldShow));
+      panel.classList.toggle('admin-visible', shouldShow);
+      // Telegram WebView'da eski inline style/cache sabab panel yashirin qolmasin.
+      if (shouldShow) {
+        panel.removeAttribute('style');
+        panel.hidden = false;
+      } else {
+        panel.style.removeProperty('display');
+      }
+    });
   }
 
   async function grantCourseAccess() {
@@ -246,6 +267,7 @@
       note.textContent = `Kirish huquqi berildi. Telegram ID: ${data.telegramId}. O‘quvchi Mini App’ni yopib, qayta ochsin.`;
       input.value = '';
       showToast('O‘quvchiga kursga ruxsat berildi.');
+      if (isAdminPreview) await loadAdminEnrollments(true);
     } catch (error) {
       const message = error && error.message ? error.message : 'Kirish huquqini berishda xatolik.';
       note.textContent = message;
@@ -254,6 +276,107 @@
     } finally {
       button.disabled = false;
       button.textContent = 'Kirish huquqini berish';
+    }
+  }
+
+
+  async function invokeAdminAction(action, extra = {}) {
+    if (!tg || !tg.initData) throw new Error('Admin panelini Telegram bot ichidan oching.');
+    if (!db) throw new Error('Supabase bilan aloqa yo‘q.');
+    const { data, error } = await db.functions.invoke('bbss-video-url', {
+      body: { action, initData: tg.initData, ...extra }
+    });
+    if (error) {
+      let message = 'Server so‘rovi bajarilmadi.';
+      try { const responseBody = await error.context.json(); if (responseBody && responseBody.error) message = responseBody.error; } catch (_) {}
+      throw new Error(message);
+    }
+    if (!data || data.ok !== true) throw new Error((data && data.error) || 'Server tasdiq qaytarmadi.');
+    return data;
+  }
+
+  function formatAccessDate(value) {
+    if (!value) return 'Sana ko‘rsatilmagan';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Sana ko‘rsatilmagan';
+    return date.toLocaleString('uz-UZ', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderAdminEnrollments(enrollments) {
+    const container = document.getElementById('admin-enrollments-list');
+    if (!container) return;
+    container.replaceChildren();
+    if (!Array.isArray(enrollments) || enrollments.length === 0) {
+      addEmpty(container, 'Hozircha faol ruxsat berilgan o‘quvchilar yo‘q.');
+      return;
+    }
+    enrollments.forEach((student) => {
+      const card = document.createElement('article');
+      card.className = 'admin-enrollment-item';
+      const head = document.createElement('div');
+      head.className = 'admin-enrollment-head';
+      const name = document.createElement('div');
+      name.className = 'admin-enrollment-name';
+      name.textContent = student.displayName || ('Telegram ID ' + student.telegramId);
+      const badge = document.createElement('span');
+      badge.className = 'pill';
+      badge.textContent = 'Faol';
+      head.append(name, badge);
+      const meta = document.createElement('div');
+      meta.className = 'admin-enrollment-meta';
+      meta.textContent = `Telegram ID: ${student.telegramId}${student.username ? ' · @' + student.username.replace(/^@/, '') : ''}\nRuxsat berilgan: ${formatAccessDate(student.grantedAt)}`;
+      meta.style.whiteSpace = 'pre-line';
+      const revoke = document.createElement('button');
+      revoke.className = 'admin-revoke-btn';
+      revoke.type = 'button';
+      revoke.textContent = 'Ruxsatni bekor qilish';
+      revoke.addEventListener('click', () => confirmRevokeAccess(String(student.telegramId), student.displayName || String(student.telegramId), revoke));
+      card.append(head, meta, revoke);
+      container.appendChild(card);
+    });
+  }
+
+  async function loadAdminEnrollments(silent = false) {
+    if (!isAdminPreview) return;
+    const note = document.getElementById('admin-enrollments-note');
+    const refresh = document.getElementById('refresh-enrollments-btn');
+    if (refresh) refresh.disabled = true;
+    if (note && !silent) note.textContent = 'Ruxsatlar ro‘yxati yuklanmoqda…';
+    try {
+      const data = await invokeAdminAction('admin_list_enrollments');
+      renderAdminEnrollments(data.enrollments || []);
+      if (note) note.textContent = `Faol ruxsatlar: ${(data.enrollments || []).length} ta.`;
+    } catch (error) {
+      const message = error && error.message ? error.message : 'Ro‘yxatni yuklab bo‘lmadi.';
+      if (note) note.textContent = message;
+      if (!silent) showToast(message);
+      console.error('Admin enrollment list error:', error);
+    } finally {
+      if (refresh) refresh.disabled = false;
+    }
+  }
+
+  function confirmRevokeAccess(targetTelegramId, displayName, button) {
+    const message = `${displayName} (ID: ${targetTelegramId}) uchun kursga kirish huquqi bekor qilinsinmi?`;
+    const proceed = (confirmed) => { if (confirmed) revokeCourseAccess(targetTelegramId, button); };
+    if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(message, proceed);
+    else proceed(window.confirm(message));
+  }
+
+  async function revokeCourseAccess(targetTelegramId, button) {
+    const note = document.getElementById('admin-enrollments-note');
+    if (button) { button.disabled = true; button.textContent = 'Bekor qilinmoqda…'; }
+    try {
+      const data = await invokeAdminAction('revoke_access', { targetTelegramId });
+      if (note) note.textContent = `Telegram ID ${data.telegramId} uchun kursga kirish huquqi bekor qilindi.`;
+      showToast('Kirish huquqi bekor qilindi.');
+      await loadAdminEnrollments(true);
+    } catch (error) {
+      const message = error && error.message ? error.message : 'Ruxsatni bekor qilib bo‘lmadi.';
+      if (note) note.textContent = message;
+      showToast(message);
+      console.error('Admin revoke access error:', error);
+      if (button) { button.disabled = false; button.textContent = 'Ruxsatni bekor qilish'; }
     }
   }
 
@@ -370,6 +493,8 @@
 
   const grantAccessButton = document.getElementById('grant-access-btn');
   if (grantAccessButton) grantAccessButton.addEventListener('click', grantCourseAccess);
+  const refreshEnrollmentsButton = document.getElementById('refresh-enrollments-btn');
+  if (refreshEnrollmentsButton) refreshEnrollmentsButton.addEventListener('click', () => loadAdminEnrollments());
 
   loadCourseCatalog();
 </script>
