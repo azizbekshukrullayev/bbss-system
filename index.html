@@ -16,6 +16,10 @@
     .hero{padding:23px 20px;border-radius:22px;border:1px solid #4a3d1c;background:radial-gradient(ellipse at top right,#302817 0%,#171612 42%,#141415 80%);position:relative;overflow:hidden}.eyebrow{font-size:10px;letter-spacing:2.1px;color:var(--gold2);text-transform:uppercase}.hero h2{font-size:27px;line-height:1.12;margin:12px 0 9px;max-width:320px}.hero p{margin:0;color:#b7b4ab;font-size:13px;max-width:320px}.hero-foot{display:flex;align-items:center;justify-content:space-between;margin-top:22px;gap:12px}.mini-tag{font-size:10px;color:#c9c4b6;border:1px solid #51462a;border-radius:999px;padding:7px 10px}.ghost-chart{color:#8e7439;letter-spacing:4px;font-size:23px}
     .section-head{display:flex;justify-content:space-between;align-items:center;margin:25px 0 12px}.section-head h3{font-size:16px;margin:0}.subtle{color:var(--muted);font-size:12px}.course-card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:11px}.course-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.course-label{font-size:10px;letter-spacing:1.5px;color:var(--gold);font-weight:700}.course-card h4{font-size:16px;margin:6px 0}.course-card p{color:var(--muted);font-size:12px;margin:0}.pill{white-space:nowrap;font-size:10px;padding:6px 8px;border-radius:8px;background:#292519;color:var(--gold2)}.progress-row{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:16px 0 7px}.bar{height:4px;background:#303032;border-radius:99px;overflow:hidden}.bar span{display:block;height:100%;background:var(--gold);width:0;border-radius:99px}.module{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.module:last-child{border-bottom:0;padding-bottom:0}.num{width:35px;height:35px;border-radius:11px;background:#24221b;display:grid;place-items:center;color:var(--gold);font-weight:700;font-size:12px;flex-shrink:0}.module-info{flex:1;min-width:0}.module-info strong{display:block;font-size:13px}.module-info span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.lock{color:#78787a;font-size:15px}
     .primary{border:0;border-radius:12px;background:var(--gold);color:#17130a;font-weight:800;padding:12px 15px;width:100%;margin-top:12px}.primary:disabled{opacity:.5;cursor:not-allowed}.secondary{border:1px solid #554824;background:transparent;color:var(--gold2);border-radius:11px;padding:10px 12px;font-weight:650;width:100%;margin-top:10px}.note{border-radius:12px;background:#1b1913;border:1px solid #40361f;color:#cfc4a1;padding:12px;font-size:12px;margin-top:14px}.screen{display:none}.screen.active{display:block}.profile-box{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:18px;text-align:center}.big-avatar{height:66px;width:66px;border-radius:50%;margin:0 auto 12px;background:#272318;color:var(--gold);display:grid;place-items:center;font-size:24px;font-weight:800;border:1px solid #5b4a23}.profile-box h3{margin:0 0 4px}.profile-box p{color:var(--muted);margin:0;font-size:12px}.info-row{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}.info-row:last-child{border:0}.info-row span:first-child{color:var(--muted)}.empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13px}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,16,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:9px 10px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:5}.nav-inner{width:100%;max-width:560px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.nav-btn{border:0;background:transparent;color:var(--muted);padding:8px 5px;border-radius:11px;font-size:10px}.nav-btn b{display:block;font-size:18px;font-weight:500;margin-bottom:2px}.nav-btn.active{color:var(--gold);background:#211d13}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);width:max-content;max-width:90%;background:#f4f0e4;color:#15130d;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:650;box-shadow:0 8px 30px #0008;display:none;z-index:9}.smallprint{font-size:10px;color:#777;margin:16px 3px 0}
+    .admin-label{display:block;margin:14px 0 7px;color:var(--gold2);font-size:12px;font-weight:700}
+    .admin-input{display:block;width:100%;padding:13px 12px;border:1px solid #51462a;border-radius:11px;background:#0f0f10;color:var(--text);font:inherit;outline:none}
+    .admin-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px #d6b45d22}
+    .admin-tools h4{margin-bottom:8px}.admin-tools p{line-height:1.5}
 
     /* Markazda joylashgan, mobil qurilmalarga mos video player */
     .video-shell{display:none;width:100%;max-width:520px;margin:18px auto 22px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;text-align:center;box-shadow:0 10px 28px #0003}
@@ -48,6 +52,15 @@
     <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Supabase</span></div>
     <section class="course-card" id="home-module-list"><div class="empty">Modullar yuklanmoqda…</div></section>
     <div class="note" id="connection-note" aria-live="polite">Supabase bilan aloqa tekshirilmoqda.</div>
+    <section class="course-card admin-tools" id="admin-tools" style="display:none" aria-live="polite">
+      <div class="course-label">ADMIN BOSHQARUVI</div>
+      <h4>O‘quvchiga kursga ruxsat berish</h4>
+      <p>O‘quvchining Profil bo‘limidagi raqamli Telegram Akkaunt ID sini kiriting. Telefon raqami yoki @username emas.</p>
+      <label class="admin-label" for="student-telegram-id">Telegram Akkaunt ID</label>
+      <input id="student-telegram-id" class="admin-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="20" autocomplete="off" placeholder="Masalan: 123456789" />
+      <button class="primary" id="grant-access-btn" type="button">Kirish huquqini berish</button>
+      <div class="note" id="admin-grant-note">To‘lovni o‘zingiz tekshirganingizdan keyingina ruxsat bering. Amal darhol kuchga kiradi.</div>
+    </section>
     <div class="smallprint">Ushbu Telegram ilovasi darslarni ko‘rish uchun. Bu yerda xarid yoki to‘lov oynasi mavjud emas.</div>
   </main>
 
@@ -112,6 +125,7 @@
   let loadedCourse = null;
   let loadedModules = [];
   let isAdminPreview = false;
+  let accessRequired = false;
 
   function renderModules(modules) {
     const homeList = document.getElementById('home-module-list');
@@ -119,8 +133,13 @@
     homeList.replaceChildren();
     lessonList.replaceChildren();
     if (!modules.length) {
-      addEmpty(homeList, isAdminPreview ? 'Modullar topilmadi.' : 'Kurs modullari hali e’lon qilinmagan.');
-      addEmpty(lessonList, isAdminPreview ? 'Bazaga modullar kiritilganini tekshiring.' : 'Hozircha ko‘rsatiladigan ochiq modul yo‘q.');
+      const emptyMessage = isAdminPreview
+        ? 'Modullar topilmadi.'
+        : accessRequired
+          ? 'Admin kirish huquqini bergandan keyin modullar va darslar ochiladi.'
+          : 'Kurs hali sozlanmagan yoki e’lon qilinmagan.';
+      addEmpty(homeList, emptyMessage);
+      addEmpty(lessonList, emptyMessage);
       document.getElementById('module-count').textContent = '0 modul';
       return;
     }
@@ -168,23 +187,86 @@
     });
   }
 
+  function updateAdminTools() {
+    const panel = document.getElementById('admin-tools');
+    if (panel) panel.style.display = isAdminPreview ? 'block' : 'none';
+  }
+
+  async function grantCourseAccess() {
+    const input = document.getElementById('student-telegram-id');
+    const button = document.getElementById('grant-access-btn');
+    const note = document.getElementById('admin-grant-note');
+    const targetTelegramId = input ? input.value.trim() : '';
+
+    if (!tg || !tg.initData) {
+      showToast('Admin panelini Telegram bot ichidan oching.');
+      return;
+    }
+    if (!/^\d{5,20}$/.test(targetTelegramId) || /^0+$/.test(targetTelegramId)) {
+      showToast('Telegram Akkaunt ID ni faqat raqamlar bilan kiriting.');
+      if (note) note.textContent = 'Raqamni o‘quvchining Profil bo‘limidagi “Akkaunt ID” qatoridan oling.';
+      return;
+    }
+    if (!db) {
+      showToast('Supabase bilan aloqa yo‘q.');
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Ruxsat berilmoqda…';
+    note.textContent = 'Admin huquqi va Telegram ID tekshirilmoqda…';
+    try {
+      const { data, error } = await db.functions.invoke('bbss-video-url', {
+        body: { action: 'grant_access', initData: tg.initData, targetTelegramId }
+      });
+      if (error) {
+        let message = 'Kirish huquqini berib bo‘lmadi.';
+        try { const responseBody = await error.context.json(); if (responseBody && responseBody.error) message = responseBody.error; } catch (_) {}
+        throw new Error(message);
+      }
+      if (!data || data.ok !== true) throw new Error((data && data.error) || 'Server tasdiq qaytarmadi.');
+      note.textContent = `Kirish huquqi berildi. Telegram ID: ${data.telegramId}. O‘quvchi Mini App’ni yopib, qayta ochsin.`;
+      input.value = '';
+      showToast('O‘quvchiga kursga ruxsat berildi.');
+    } catch (error) {
+      const message = error && error.message ? error.message : 'Kirish huquqini berishda xatolik.';
+      note.textContent = message;
+      showToast(message);
+      console.error('Admin grant access error:', error);
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Kirish huquqini berish';
+    }
+  }
+
   function applyCatalog(catalog) {
     isAdminPreview = catalog.admin === true;
+    accessRequired = catalog.accessRequired === true;
+    updateAdminTools();
     const course = catalog.course;
     const modules = Array.isArray(catalog.modules) ? catalog.modules : [];
     loadedCourse = course;
     loadedModules = modules;
     document.getElementById('db-status').textContent = 'Bazaga ulandi';
     if (!course) {
-      document.getElementById('course-title').textContent = 'Kurs hozircha e’lon qilinmagan';
-      document.getElementById('course-description').textContent = 'Kurs admin tomonidan e’lon qilingach shu yerda ko‘rinadi.';
-      document.getElementById('connection-note').textContent = 'Supabase bilan aloqa ishlayapti. Kurs hozircha maxfiy holatda.';
-      document.getElementById('lesson-note').textContent = 'Kurs e’lon qilinmagan.';
+      if (accessRequired) {
+        document.getElementById('course-title').textContent = 'Kirish huquqi kutilmoqda';
+        document.getElementById('course-description').textContent = 'Admin Telegram Akkaunt ID raqamingizga ruxsat bergach, darslar shu yerda ochiladi.';
+        document.getElementById('connection-note').textContent = 'Profil bo‘limidagi Akkaunt ID ni adminga yuboring. Telefon raqami yoki username kerak emas.';
+        document.getElementById('lesson-note').textContent = 'Kurs darslari admin ruxsatidan keyin ochiladi.';
+        document.getElementById('course-status').textContent = 'Ruxsat kutilmoqda';
+      } else {
+        document.getElementById('course-title').textContent = 'Kurs ma’lumoti topilmadi';
+        document.getElementById('course-description').textContent = 'Kurs sozlamalarini admin tekshirishi kerak.';
+        document.getElementById('connection-note').textContent = 'Supabase bilan aloqa ishlayapti, lekin kurs topilmadi.';
+        document.getElementById('lesson-note').textContent = 'Kurs ma’lumoti topilmadi.';
+      }
       renderModules([]);
       return;
     }
     document.getElementById('course-title').textContent = course.title || 'BBSS Trading Course';
     document.getElementById('course-description').textContent = course.description || 'BBSS SYSTEM trading kursi';
+    document.getElementById('course-status').textContent = isAdminPreview ? 'Admin' : 'Faol';
     document.getElementById('connection-note').textContent = isAdminPreview
       ? 'Admin ko‘rishi: e’lon qilinmagan darslar ham ko‘rsatilmoqda. O‘quvchilarga hali ochilmagan.'
       : 'Kurs katalogi yuklandi. Har bir video uchun kirish huquqi serverda tekshiriladi.';
@@ -265,6 +347,9 @@
       console.error('Video open error:', error);
     }
   }
+
+  const grantAccessButton = document.getElementById('grant-access-btn');
+  if (grantAccessButton) grantAccessButton.addEventListener('click', grantCourseAccess);
 
   loadCourseCatalog();
 </script>
