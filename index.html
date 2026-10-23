@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0b0b0c" />
   <title>BBSS SYSTEM — Trading Education</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{--bg:#0b0b0c;--panel:#151516;--panel2:#1d1d1f;--gold:#d6b45d;--gold2:#f0d889;--text:#f5f5f4;--muted:#9b9b9d;--line:#2c2c2e;--green:#8fd2a3}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:0 0 calc(82px + env(safe-area-inset-bottom));}
@@ -31,32 +32,20 @@
       <p>Tradingni tizimli o‘rganish uchun maxsus ta’lim maydoni.</p>
       <div class="hero-foot"><span class="mini-tag">XAUUSD · EURUSD</span><span class="ghost-chart">↗ ━ ↘ ━ ↗</span></div>
     </section>
-    <div class="section-head"><h3>Mening kursim</h3><span class="subtle">Demo ko‘rinish</span></div>
+    <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
     <section class="course-card">
-      <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4>BBSS Trading Course</h4><p>Strategiya, tahlil va risk boshqaruvi</p></div><span class="pill">3 modul</span></div>
-      <div class="progress-row"><span>O‘quv jarayoni</span><span id="progress-label">0%</span></div><div class="bar"><span id="progress-bar"></span></div>
+      <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4 id="course-title">BBSS Trading Course</h4><p id="course-description">Supabase’dan ma’lumot olinmoqda…</p></div><span class="pill" id="module-count">— modul</span></div>
       <button class="primary" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
     </section>
-    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Namuna</span></div>
-    <section class="course-card">
-      <div class="module"><div class="num">01</div><div class="module-info"><strong>Trading asoslari</strong><span>4 dars · Video va PDF</span></div><span class="lock">⌁</span></div>
-      <div class="module"><div class="num">02</div><div class="module-info"><strong>BBSS strategiyasi</strong><span>6 dars · Video va PDF</span></div><span class="lock">🔒</span></div>
-      <div class="module"><div class="num">03</div><div class="module-info"><strong>Risk va psixologiya</strong><span>3 dars · Video va PDF</span></div><span class="lock">🔒</span></div>
-    </section>
-    <div class="note">Bu hozircha dizayn namunasi. Haqiqiy kurs videolari, PDF fayllar, to‘lov tasdiqlash va foydalanuvchi ruxsatlari hali ulanmagan.</div>
+    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Supabase</span></div>
+    <section class="course-card" id="home-module-list"><div class="empty">Modullar yuklanmoqda…</div></section>
+    <div class="note" id="connection-note" aria-live="polite">Supabase bilan aloqa tekshirilmoqda.</div>
   </main>
 
   <main id="lessons-screen" class="screen">
-    <div class="section-head"><h3>Kurs darslari</h3><span class="subtle">BBSS SYSTEM</span></div>
-    <section class="course-card">
-      <div class="course-label">MODUL 01</div><h4>Trading asoslari</h4><p>Bozorni tushunish uchun boshlang‘ich darslar.</p>
-      <div class="module"><div class="num">01</div><div class="module-info"><strong>Trading nima?</strong><span>Video · 12 daqiqa · PDF konspekt</span></div><span class="lock">🔒</span></div>
-      <div class="module"><div class="num">02</div><div class="module-info"><strong>Market structure</strong><span>Video · 18 daqiqa · PDF konspekt</span></div><span class="lock">🔒</span></div>
-      <div class="module"><div class="num">03</div><div class="module-info"><strong>Likvidlik tushunchasi</strong><span>Video · 15 daqiqa · PDF konspekt</span></div><span class="lock">🔒</span></div>
-      <button class="secondary" onclick="showToast('Demo rejim: kursga kirish to‘lov tasdiqlangach ochiladi.')">Kursga kirish haqida</button>
-    </section>
-    <section class="course-card"><div class="course-label">MODUL 02</div><h4>BBSS strategiyasi</h4><p>Faqat kirish huquqi berilgan o‘quvchilar uchun.</p><div class="module"><div class="num">02</div><div class="module-info"><strong>Strategiya qoidalari</strong><span>Video va PDF</span></div><span class="lock">🔒</span></div></section>
-    <div class="note">Darslar ommaviy havolalar bilan emas, foydalanuvchi ruxsati tekshirilganidan keyin ochilishi kerak.</div>
+    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">BBSS SYSTEM</span></div>
+    <section id="lesson-module-list" class="course-card"><div class="empty">Modullar yuklanmoqda…</div></section>
+    <div class="note">Bu bosqichda bazaga ulanish va ochiq modullar ro‘yxati ishlaydi. Haqiqiy video/PDF darslar, to‘lov va o‘quvchi ruxsatlari keyingi bosqichda xavfsiz tarzda ulanadi.</div>
   </main>
 
   <main id="profile-screen" class="screen">
@@ -65,7 +54,7 @@
     <div class="note">Telegram ichida ochilganda profil ma’lumotlari ko‘rsatilishi mumkin. Haqiqiy kirish huquqi serverda tekshirilishi shart.</div>
     <button class="secondary" onclick="showToast('Admin bilan aloqa havolasi keyingi bosqichda sozlanadi.')">Admin bilan bog‘lanish</button>
   </main>
-  <p class="smallprint">© BBSS SYSTEM · Ta’lim uchun. Bu sahifa hozircha prototip hisoblanadi.</p>
+  <p class="smallprint">© BBSS SYSTEM · Ta’lim uchun. To‘lov va darslarga ruxsat tekshiruvi hali ulanmagan.</p>
 </div>
 <nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button></div></nav>
 <div class="toast" id="toast"></div>
@@ -85,6 +74,14 @@
       document.getElementById('profile-id').textContent = String(u.id);
     }
   }
+
+  // Browser uchun faqat ommaviy publishable key ishlatiladi. Secret/service_role kalitini qo‘ymang.
+  const SUPABASE_URL = 'https://mhzplzekdgbvlkdjojaz.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_noams1RyGyPOg6FXizXAOA_gaeEamsy';
+  const db = window.supabase && typeof window.supabase.createClient === 'function'
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+    : null;
+
   function showScreen(screen) {
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById(screen+'-screen').classList.add('active');
@@ -93,6 +90,92 @@
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
+
+  function addEmpty(container, message) {
+    container.replaceChildren();
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = message;
+    container.appendChild(empty);
+  }
+
+  function renderModules(modules) {
+    const homeList = document.getElementById('home-module-list');
+    const lessonList = document.getElementById('lesson-module-list');
+    homeList.replaceChildren();
+    lessonList.replaceChildren();
+    if (!modules.length) {
+      addEmpty(homeList, 'Kurs modullari hali e’lon qilinmagan.');
+      addEmpty(lessonList, 'Hozircha ko‘rsatiladigan ochiq modul yo‘q.');
+      document.getElementById('module-count').textContent = '0 modul';
+      return;
+    }
+    document.getElementById('module-count').textContent = modules.length + (modules.length === 1 ? ' modul' : ' modul');
+    modules.forEach((module, index) => {
+      const number = String(module.sort_order || index + 1).padStart(2, '0');
+      const row = document.createElement('div');
+      row.className = 'module';
+      const badge = document.createElement('div'); badge.className = 'num'; badge.textContent = number;
+      const info = document.createElement('div'); info.className = 'module-info';
+      const title = document.createElement('strong'); title.textContent = module.title || 'Modul';
+      const desc = document.createElement('span'); desc.textContent = module.description || 'Dars materiallari keyingi bosqichda qo‘shiladi';
+      info.append(title, desc);
+      const lock = document.createElement('span'); lock.className = 'lock'; lock.textContent = '🔒';
+      row.append(badge, info, lock); homeList.appendChild(row);
+
+      const card = document.createElement('div'); card.className = 'course-card';
+      const label = document.createElement('div'); label.className = 'course-label'; label.textContent = 'MODUL ' + number;
+      const heading = document.createElement('h4'); heading.textContent = module.title || 'Modul';
+      const description = document.createElement('p'); description.textContent = module.description || 'Dars materiallari keyingi bosqichda qo‘shiladi.';
+      const note = document.createElement('div'); note.className = 'note'; note.textContent = 'Dars fayllari va o‘quvchi kirish huquqi hali ulanmagan.';
+      card.append(label, heading, description, note); lessonList.appendChild(card);
+    });
+  }
+
+  async function loadCourseCatalog() {
+    const status = document.getElementById('db-status');
+    const note = document.getElementById('connection-note');
+    try {
+      if (!db) throw new Error('Supabase JavaScript kutubxonasi yuklanmadi');
+      const { data: course, error: courseError } = await db
+        .from('courses')
+        .select('id,title,description,price,currency')
+        .eq('slug', 'bbss-trading-course')
+        .eq('is_published', true)
+        .maybeSingle();
+      if (courseError) throw courseError;
+      if (!course) {
+        status.textContent = 'Bazaga ulandi';
+        document.getElementById('course-title').textContent = 'Kurs hozircha e’lon qilinmagan';
+        document.getElementById('course-description').textContent = 'Kurs admin tomonidan e’lon qilingach shu yerda ko‘rinadi.';
+        note.textContent = 'Supabase bilan aloqa ishlayapti. Kurs hozircha maxfiy holatda — bu ataylab shunday.';
+        renderModules([]);
+        return;
+      }
+      document.getElementById('course-title').textContent = course.title || 'BBSS Trading Course';
+      document.getElementById('course-description').textContent = course.description || 'BBSS SYSTEM trading kursi';
+      status.textContent = 'Bazaga ulandi';
+      note.textContent = 'Kurs ma’lumotlari Supabase bazasidan yuklandi. Darslar va to‘lovlar hali ulanmagan.';
+      const { data: modules, error: modulesError } = await db
+        .from('modules')
+        .select('id,title,description,sort_order')
+        .eq('course_id', course.id)
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true });
+      if (modulesError) throw modulesError;
+      renderModules(modules || []);
+    } catch (error) {
+      console.error('Supabase catalog error:', error);
+      status.textContent = 'Ulanishda xato';
+      document.getElementById('course-title').textContent = 'Kurs ma’lumotini yuklab bo‘lmadi';
+      document.getElementById('course-description').textContent = 'Internet va Supabase sozlamalarini tekshirish kerak.';
+      note.textContent = 'Supabase bilan ulanishda xatolik. GitHub Pages orqali ochib qayta tekshiring.';
+      addEmpty(document.getElementById('home-module-list'), 'Modullarni yuklab bo‘lmadi.');
+      addEmpty(document.getElementById('lesson-module-list'), 'Modullarni yuklab bo‘lmadi.');
+    }
+  }
+
+  loadCourseCatalog();
 </script>
 </body>
 </html>
