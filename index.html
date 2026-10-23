@@ -20,6 +20,9 @@
     .admin-input{display:block;width:100%;padding:13px 12px;border:1px solid #51462a;border-radius:11px;background:#0f0f10;color:var(--text);font:inherit;outline:none}
     .admin-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px #d6b45d22}
     .admin-tools h4{margin-bottom:8px}.admin-tools p{line-height:1.5}
+    /* Admin panel ko‘rinishi inline display:none bilan bloklanib qolmasin. */
+    #admin-tools.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
+    #admin-tools[hidden]{display:none!important}
 
     /* Markazda joylashgan, mobil qurilmalarga mos video player */
     .video-shell{display:none;width:100%;max-width:520px;margin:18px auto 22px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;text-align:center;box-shadow:0 10px 28px #0003}
@@ -44,15 +47,7 @@
       <p>Tradingni tizimli o‘rganish uchun maxsus ta’lim maydoni.</p>
       <div class="hero-foot"><span class="mini-tag">XAUUSD · EURUSD</span><span class="ghost-chart">↗ ━ ↘ ━ ↗</span></div>
     </section>
-    <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
-    <section class="course-card">
-      <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4 id="course-title">BBSS Trading Course</h4><p id="course-description">Supabase’dan ma’lumot olinmoqda…</p></div><span class="pill" id="module-count">— modul</span></div>
-      <button class="primary" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
-    </section>
-    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Supabase</span></div>
-    <section class="course-card" id="home-module-list"><div class="empty">Modullar yuklanmoqda…</div></section>
-    <div class="note" id="connection-note" aria-live="polite">Supabase bilan aloqa tekshirilmoqda.</div>
-    <section class="course-card admin-tools" id="admin-tools" style="display:none" aria-live="polite">
+    <section class="course-card admin-tools" id="admin-tools" hidden aria-hidden="true" aria-live="polite">
       <div class="course-label">ADMIN BOSHQARUVI</div>
       <h4>O‘quvchiga kursga ruxsat berish</h4>
       <p>O‘quvchining Profil bo‘limidagi raqamli Telegram Akkaunt ID sini kiriting. Telefon raqami yoki @username emas.</p>
@@ -61,6 +56,15 @@
       <button class="primary" id="grant-access-btn" type="button">Kirish huquqini berish</button>
       <div class="note" id="admin-grant-note">To‘lovni o‘zingiz tekshirganingizdan keyingina ruxsat bering. Amal darhol kuchga kiradi.</div>
     </section>
+    <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
+    <section class="course-card">
+      <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4 id="course-title">BBSS Trading Course</h4><p id="course-description">Supabase’dan ma’lumot olinmoqda…</p></div><span class="pill" id="module-count">— modul</span></div>
+      <button class="primary" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
+    </section>
+    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Supabase</span></div>
+    <section class="course-card" id="home-module-list"><div class="empty">Modullar yuklanmoqda…</div></section>
+    <div class="note" id="connection-note" aria-live="polite">Supabase bilan aloqa tekshirilmoqda.</div>
+
     <div class="smallprint">Ushbu Telegram ilovasi darslarni ko‘rish uchun. Bu yerda xarid yoki to‘lov oynasi mavjud emas.</div>
   </main>
 
@@ -189,7 +193,21 @@
 
   function updateAdminTools() {
     const panel = document.getElementById('admin-tools');
-    if (panel) panel.style.display = isAdminPreview ? 'block' : 'none';
+    if (!panel) {
+      console.error('BBSS admin panel element #admin-tools topilmadi. index.html yangilanganini tekshiring.');
+      return;
+    }
+    const shouldShow = isAdminPreview === true;
+    panel.hidden = !shouldShow;
+    panel.setAttribute('aria-hidden', String(!shouldShow));
+    panel.classList.toggle('admin-visible', shouldShow);
+    // Telegram WebView'da eski inline style/cache sabab panel yashirin qolmasin.
+    if (shouldShow) {
+      panel.removeAttribute('style');
+      panel.hidden = false;
+    } else {
+      panel.style.removeProperty('display');
+    }
   }
 
   async function grantCourseAccess() {
@@ -243,6 +261,8 @@
     isAdminPreview = catalog.admin === true;
     accessRequired = catalog.accessRequired === true;
     updateAdminTools();
+    // Catalog holati DOM'ga yozilgach, admin panelining ko'rinishini yana sinxronlang.
+    requestAnimationFrame(() => updateAdminTools());
     const course = catalog.course;
     const modules = Array.isArray(catalog.modules) ? catalog.modules : [];
     loadedCourse = course;
