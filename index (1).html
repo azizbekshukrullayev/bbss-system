@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0c" />
+  <title>BBSS SYSTEM — Trading Education</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{--bg:#0b0b0c;--panel:#151516;--panel2:#1d1d1f;--gold:#d6b45d;--gold2:#f0d889;--text:#f5f5f4;--muted:#9b9b9d;--line:#2c2c2e;--green:#8fd2a3}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:0 0 calc(82px + env(safe-area-inset-bottom));}
+    button{font:inherit;cursor:pointer} .app{max-width:560px;margin:0 auto;min-height:100vh;padding:18px 16px 24px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 22px}.brand{display:flex;align-items:center;gap:11px}.mark{width:43px;height:43px;border:1px solid #806b32;border-radius:13px;display:grid;place-items:center;color:var(--gold);font-size:17px;font-weight:900;letter-spacing:-1px;background:linear-gradient(145deg,#222016,#111)}
+    .brand h1{font-size:15px;letter-spacing:1.7px;margin:0}.brand p{margin:2px 0 0;color:var(--gold);font-size:10px;letter-spacing:2px}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel2);color:var(--gold);font-weight:700}
+    .hero{padding:23px 20px;border-radius:22px;border:1px solid #4a3d1c;background:radial-gradient(ellipse at top right,#302817 0%,#171612 42%,#141415 80%);position:relative;overflow:hidden}.eyebrow{font-size:10px;letter-spacing:2.1px;color:var(--gold2);text-transform:uppercase}.hero h2{font-size:27px;line-height:1.12;margin:12px 0 9px;max-width:320px}.hero p{margin:0;color:#b7b4ab;font-size:13px;max-width:320px}.hero-foot{display:flex;align-items:center;justify-content:space-between;margin-top:22px;gap:12px}.mini-tag{font-size:10px;color:#c9c4b6;border:1px solid #51462a;border-radius:999px;padding:7px 10px}.ghost-chart{color:#8e7439;letter-spacing:4px;font-size:23px}
+    .section-head{display:flex;justify-content:space-between;align-items:center;margin:25px 0 12px}.section-head h3{font-size:16px;margin:0}.subtle{color:var(--muted);font-size:12px}.course-card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:11px}.course-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.course-label{font-size:10px;letter-spacing:1.5px;color:var(--gold);font-weight:700}.course-card h4{font-size:16px;margin:6px 0}.course-card p{color:var(--muted);font-size:12px;margin:0}.pill{white-space:nowrap;font-size:10px;padding:6px 8px;border-radius:8px;background:#292519;color:var(--gold2)}.progress-row{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:16px 0 7px}.bar{height:4px;background:#303032;border-radius:99px;overflow:hidden}.bar span{display:block;height:100%;background:var(--gold);width:0;border-radius:99px}.module{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.module:last-child{border-bottom:0;padding-bottom:0}.num{width:35px;height:35px;border-radius:11px;background:#24221b;display:grid;place-items:center;color:var(--gold);font-weight:700;font-size:12px;flex-shrink:0}.module-info{flex:1;min-width:0}.module-info strong{display:block;font-size:13px}.module-info span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.lock{color:#78787a;font-size:15px}
+    .primary{border:0;border-radius:12px;background:var(--gold);color:#17130a;font-weight:800;padding:12px 15px;width:100%;margin-top:12px}.secondary{border:1px solid #554824;background:transparent;color:var(--gold2);border-radius:11px;padding:10px 12px;font-weight:650;width:100%;margin-top:10px}.note{border-radius:12px;background:#1b1913;border:1px solid #40361f;color:#cfc4a1;padding:12px;font-size:12px;margin-top:14px}.screen{display:none}.screen.active{display:block}.profile-box{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:18px;text-align:center}.big-avatar{height:66px;width:66px;border-radius:50%;margin:0 auto 12px;background:#272318;color:var(--gold);display:grid;place-items:center;font-size:24px;font-weight:800;border:1px solid #5b4a23}.profile-box h3{margin:0 0 4px}.profile-box p{color:var(--muted);margin:0;font-size:12px}.info-row{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}.info-row:last-child{border:0}.info-row span:first-child{color:var(--muted)}.empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13px}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,16,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:9px 10px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:5}.nav-inner{width:100%;max-width:560px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.nav-btn{border:0;background:transparent;color:var(--muted);padding:8px 5px;border-radius:11px;font-size:10px}.nav-btn b{display:block;font-size:18px;font-weight:500;margin-bottom:2px}.nav-btn.active{color:var(--gold);background:#211d13}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);width:max-content;max-width:90%;background:#f4f0e4;color:#15130d;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:650;box-shadow:0 8px 30px #0008;display:none;z-index:9}.smallprint{font-size:10px;color:#777;margin:16px 3px 0}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="mark">BB</div><div><h1>BBSS SYSTEM</h1><p>TRADING EDUCATION</p></div></div>
+    <div class="avatar" id="top-avatar">B</div>
+  </header>
+
+  <main id="home-screen" class="screen active">
+    <section class="hero">
+      <div class="eyebrow">BLACK BANK SYSTEM</div>
+      <h2>Bilim. Intizom. Tizim.</h2>
+      <p>Tradingni tizimli o‘rganish uchun maxsus ta’lim maydoni.</p>
+      <div class="hero-foot"><span class="mini-tag">XAUUSD · EURUSD</span><span class="ghost-chart">↗ ━ ↘ ━ ↗</span></div>
+    </section>
+    <div class="section-head"><h3>Mening kursim</h3><span class="subtle">Demo ko‘rinish</span></div>
+    <section class="course-card">
+      <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4>BBSS Trading Course</h4><p>Strategiya, tahlil va risk boshqaruvi</p></div><span class="pill">3 modul</span></div>
+      <div class="progress-row"><span>O‘quv jarayoni</span><span id="progress-label">0%</span></div><div class="bar"><span id="progress-bar"></span></div>
+      <button class="primary" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
+    </section>
+    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Namuna</span></div>
+    <section class="course-card">
+      <div class="module"><div class="num">01</div><div class="module-info"><strong>Trading asoslari</strong><span>4 dars · Video va PDF</span></div><span class="lock">⌁</span></div>
+      <div class="module"><div class="num">02</div><div class="module-info"><strong>BBSS strategiyasi</strong><span>6 dars · Video va PDF</span></div><span class="lock">🔒</span></div>
+      <div class="module"><div class="num">03</div><div class="module-info"><strong>Risk va psixologiya</strong><span>3 dars · Video va PDF</span></div><span class="lock">🔒</span></div>
+    </section>
+    <div class="note">Bu hozircha dizayn namunasi. Haqiqiy kurs videolari, PDF fayllar, to‘lov tasdiqlash va foydalanuvchi ruxsatlari hali ulanmagan.</div>
+  </main>
+
+  <main id="lessons-screen" class="screen">
+    <div class="section-head"><h3>Kurs darslari</h3><span class="subtle">BBSS SYSTEM</span></div>
+    <section class="course-card">
+      <div class="course-label">MODUL 01</div><h4>Trading asoslari</h4><p>Bozorni tushunish uchun boshlang‘ich darslar.</p>
+      <div class="module"><div class="num">01</div><div class="module-info"><strong>Trading nima?</strong><span>Video · 12 daqiqa · PDF konspekt</span></div><span class="lock">🔒</span></div>
+      <div class="module"><div class="num">02</div><div class="module-info"><strong>Market structure</strong><span>Video · 18 daqiqa · PDF konspekt</span></div><span class="lock">🔒</span></div>
+      <div class="module"><div class="num">03</div><div class="module-info"><strong>Likvidlik tushunchasi</strong><span>Video · 15 daqiqa · PDF konspekt</span></div><span class="lock">🔒</span></div>
+      <button class="secondary" onclick="showToast('Demo rejim: kursga kirish to‘lov tasdiqlangach ochiladi.')">Kursga kirish haqida</button>
+    </section>
+    <section class="course-card"><div class="course-label">MODUL 02</div><h4>BBSS strategiyasi</h4><p>Faqat kirish huquqi berilgan o‘quvchilar uchun.</p><div class="module"><div class="num">02</div><div class="module-info"><strong>Strategiya qoidalari</strong><span>Video va PDF</span></div><span class="lock">🔒</span></div></section>
+    <div class="note">Darslar ommaviy havolalar bilan emas, foydalanuvchi ruxsati tekshirilganidan keyin ochilishi kerak.</div>
+  </main>
+
+  <main id="profile-screen" class="screen">
+    <div class="section-head"><h3>Mening profilim</h3><span class="subtle">O‘quvchi kabineti</span></div>
+    <section class="profile-box"><div class="big-avatar" id="profile-avatar">B</div><h3 id="profile-name">BBSS o‘quvchisi</h3><p id="profile-username">Telegram profili aniqlanmagan</p><div style="height:18px"></div><div class="info-row"><span>Akkaunt ID</span><strong id="profile-id">Demo rejim</strong></div><div class="info-row"><span>Kurs holati</span><strong style="color:var(--gold)" id="course-status">Kirish kutilmoqda</strong></div><div class="info-row"><span>Faol modullar</span><strong>0 / 3</strong></div></section>
+    <div class="note">Telegram ichida ochilganda profil ma’lumotlari ko‘rsatilishi mumkin. Haqiqiy kirish huquqi serverda tekshirilishi shart.</div>
+    <button class="secondary" onclick="showToast('Admin bilan aloqa havolasi keyingi bosqichda sozlanadi.')">Admin bilan bog‘lanish</button>
+  </main>
+  <p class="smallprint">© BBSS SYSTEM · Ta’lim uchun. Bu sahifa hozircha prototip hisoblanadi.</p>
+</div>
+<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button></div></nav>
+<div class="toast" id="toast"></div>
+<script>
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) {
+    tg.ready(); tg.expand();
+    try { tg.setHeaderColor('#0b0b0c'); tg.setBackgroundColor('#0b0b0c'); } catch(e) {}
+    const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (u) {
+      const full = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'BBSS o‘quvchisi';
+      const initial = (u.first_name || 'B').slice(0,1).toUpperCase();
+      document.getElementById('top-avatar').textContent = initial;
+      document.getElementById('profile-avatar').textContent = initial;
+      document.getElementById('profile-name').textContent = full;
+      document.getElementById('profile-username').textContent = u.username ? '@'+u.username : 'Telegram foydalanuvchisi';
+      document.getElementById('profile-id').textContent = String(u.id);
+    }
+  }
+  function showScreen(screen) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(screen+'-screen').classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===screen));
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  let toastTimer;
+  function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
+</script>
+</body>
+</html>
