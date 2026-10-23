@@ -40,6 +40,13 @@
     <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Supabase</span></div>
     <section class="course-card" id="home-module-list"><div class="empty">Modullar yuklanmoqda…</div></section>
     <div class="note" id="connection-note" aria-live="polite">Supabase bilan aloqa tekshirilmoqda.</div>
+    <section class="course-card admin-tools" id="admin-tools" style="display:none" aria-live="polite">
+      <div class="course-label">ADMIN BOSHQARUVI</div>
+      <h4>Telegram Stars webhook</h4>
+      <p id="admin-tools-note">Telegram to‘lov xabarlarini Supabase funksiyasiga ulash.</p>
+      <button class="secondary" id="setup-webhook-btn" type="button">Webhook’ni sozlash</button>
+      <div class="note">Bu amal faqat admin uchun. Kurs hali e’lon qilinmaydi va hech qanday to‘lov olinmaydi.</div>
+    </section>
   </main>
 
   <main id="lessons-screen" class="screen">
@@ -159,8 +166,54 @@
     });
   }
 
+  function updateAdminTools() {
+    const panel = document.getElementById('admin-tools');
+    if (panel) panel.style.display = isAdminPreview ? 'block' : 'none';
+  }
+
+  async function registerStarsWebhook() {
+    const button = document.getElementById('setup-webhook-btn');
+    const note = document.getElementById('admin-tools-note');
+    if (!tg || !tg.initData) {
+      showToast('Admin sozlamalarini Telegram bot ichidan oching.');
+      return;
+    }
+    if (!db) {
+      showToast('Supabase ulanmagan.');
+      return;
+    }
+    button.disabled = true;
+    button.textContent = 'Sozlanmoqda…';
+    note.textContent = 'Telegram webhook ro‘yxatdan o‘tkazilmoqda…';
+    try {
+      const { data, error } = await db.functions.invoke('bbss-stars-payment', {
+        body: { action: 'register_webhook', initData: tg.initData }
+      });
+      if (error) {
+        let message = 'Webhook’ni sozlab bo‘lmadi.';
+        try {
+          const responseBody = await error.context.json();
+          if (responseBody && responseBody.error) message = responseBody.error;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      if (!data || data.ok !== true) throw new Error((data && data.error) || 'Webhook’ni sozlab bo‘lmadi.');
+      note.textContent = 'Webhook muvaffaqiyatli sozlandi. URL: ' + (data.webhookUrl || 'Supabase Edge Function');
+      showToast('Telegram webhook’i sozlandi.');
+    } catch (error) {
+      const message = error && error.message ? error.message : 'Webhook’ni sozlashda xatolik yuz berdi.';
+      note.textContent = message;
+      showToast(message);
+      console.error('Webhook registration failed:', error);
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Webhook’ni qayta tekshirish';
+    }
+  }
+
   function applyCatalog(catalog) {
     isAdminPreview = catalog.admin === true;
+    updateAdminTools();
     const course = catalog.course;
     const modules = Array.isArray(catalog.modules) ? catalog.modules : [];
     loadedCourse = course;
@@ -256,6 +309,9 @@
       console.error('Video open error:', error);
     }
   }
+
+  const webhookButton = document.getElementById('setup-webhook-btn');
+  if (webhookButton) webhookButton.addEventListener('click', registerStarsWebhook);
 
   loadCourseCatalog();
 </script>
