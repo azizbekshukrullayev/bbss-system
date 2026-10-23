@@ -44,8 +44,9 @@
 
   <main id="lessons-screen" class="screen">
     <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">BBSS SYSTEM</span></div>
+    <section id="video-player" class="video-shell" aria-live="polite"><div class="video-title" id="video-title"></div><iframe id="video-frame" class="video-frame" title="BBSS SYSTEM video darsi" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="video-hint">Video havolasi vaqtinchalik. Darsga kirish huquqi serverda tekshiriladi.</div></section>
     <section id="lesson-module-list" class="course-card"><div class="empty">Modullar yuklanmoqda…</div></section>
-    <div class="note">Bu bosqichda bazaga ulanish va ochiq modullar ro‘yxati ishlaydi. Haqiqiy video/PDF darslar, to‘lov va o‘quvchi ruxsatlari keyingi bosqichda xavfsiz tarzda ulanadi.</div>
+    <div class="note" id="lesson-note">Video darslar faqat Telegram orqali va ruxsat tekshiruvidan keyin ochiladi.</div>
   </main>
 
   <main id="profile-screen" class="screen">
@@ -99,18 +100,22 @@
     container.appendChild(empty);
   }
 
+  let loadedCourse = null;
+  let loadedModules = [];
+  let isAdminPreview = false;
+
   function renderModules(modules) {
     const homeList = document.getElementById('home-module-list');
     const lessonList = document.getElementById('lesson-module-list');
     homeList.replaceChildren();
     lessonList.replaceChildren();
     if (!modules.length) {
-      addEmpty(homeList, 'Kurs modullari hali e’lon qilinmagan.');
-      addEmpty(lessonList, 'Hozircha ko‘rsatiladigan ochiq modul yo‘q.');
+      addEmpty(homeList, isAdminPreview ? 'Modullar topilmadi.' : 'Kurs modullari hali e’lon qilinmagan.');
+      addEmpty(lessonList, isAdminPreview ? 'Bazaga modullar kiritilganini tekshiring.' : 'Hozircha ko‘rsatiladigan ochiq modul yo‘q.');
       document.getElementById('module-count').textContent = '0 modul';
       return;
     }
-    document.getElementById('module-count').textContent = modules.length + (modules.length === 1 ? ' modul' : ' modul');
+    document.getElementById('module-count').textContent = modules.length + ' modul';
     modules.forEach((module, index) => {
       const number = String(module.sort_order || index + 1).padStart(2, '0');
       const row = document.createElement('div');
@@ -118,18 +123,80 @@
       const badge = document.createElement('div'); badge.className = 'num'; badge.textContent = number;
       const info = document.createElement('div'); info.className = 'module-info';
       const title = document.createElement('strong'); title.textContent = module.title || 'Modul';
-      const desc = document.createElement('span'); desc.textContent = module.description || 'Dars materiallari keyingi bosqichda qo‘shiladi';
+      const desc = document.createElement('span'); desc.textContent = module.description || 'Dars materiallari';
       info.append(title, desc);
-      const lock = document.createElement('span'); lock.className = 'lock'; lock.textContent = '🔒';
+      const lock = document.createElement('span'); lock.className = 'lock'; lock.textContent = '▾';
       row.append(badge, info, lock); homeList.appendChild(row);
 
       const card = document.createElement('div'); card.className = 'course-card';
       const label = document.createElement('div'); label.className = 'course-label'; label.textContent = 'MODUL ' + number;
       const heading = document.createElement('h4'); heading.textContent = module.title || 'Modul';
-      const description = document.createElement('p'); description.textContent = module.description || 'Dars materiallari keyingi bosqichda qo‘shiladi.';
-      const note = document.createElement('div'); note.className = 'note'; note.textContent = 'Dars fayllari va o‘quvchi kirish huquqi hali ulanmagan.';
-      card.append(label, heading, description, note); lessonList.appendChild(card);
+      const description = document.createElement('p'); description.textContent = module.description || 'Darslar';
+      card.append(label, heading, description);
+      const lessons = Array.isArray(module.lessons) ? module.lessons : [];
+      if (!lessons.length) {
+        const note = document.createElement('div'); note.className = 'note'; note.textContent = 'Bu modulda hozircha e’lon qilingan dars yo‘q.';
+        card.appendChild(note);
+      } else {
+        lessons.forEach((lesson) => {
+          const item = document.createElement('div'); item.className = 'lesson-item';
+          const lessonInfo = document.createElement('div'); lessonInfo.className = 'lesson-info';
+          const lessonTitle = document.createElement('strong'); lessonTitle.textContent = lesson.title || 'Dars';
+          const lessonMeta = document.createElement('span');
+          lessonMeta.textContent = (lesson.content_type === 'video' ? 'Video dars' : 'PDF material') + (lesson.is_published ? '' : ' · Admin ko‘rishi');
+          lessonInfo.append(lessonTitle, lessonMeta);
+          const action = document.createElement('button'); action.className = 'lesson-action';
+          action.textContent = lesson.content_type === 'video' ? '▶ Ochish' : 'PDF';
+          if (lesson.content_type !== 'video') {
+            action.addEventListener('click', () => showToast('PDF fayl hali saytga ulanmagan.'));
+          } else {
+            action.addEventListener('click', () => openVideoLesson(lesson));
+          }
+          item.append(lessonInfo, action); card.appendChild(item);
+        });
+      }
+      lessonList.appendChild(card);
     });
+  }
+
+  function applyCatalog(catalog) {
+    isAdminPreview = catalog.admin === true;
+    const course = catalog.course;
+    const modules = Array.isArray(catalog.modules) ? catalog.modules : [];
+    loadedCourse = course;
+    loadedModules = modules;
+    document.getElementById('db-status').textContent = 'Bazaga ulandi';
+    if (!course) {
+      document.getElementById('course-title').textContent = 'Kurs hozircha e’lon qilinmagan';
+      document.getElementById('course-description').textContent = 'Kurs admin tomonidan e’lon qilingach shu yerda ko‘rinadi.';
+      document.getElementById('connection-note').textContent = 'Supabase bilan aloqa ishlayapti. Kurs hozircha maxfiy holatda.';
+      document.getElementById('lesson-note').textContent = 'Kurs e’lon qilinmagan.';
+      renderModules([]);
+      return;
+    }
+    document.getElementById('course-title').textContent = course.title || 'BBSS Trading Course';
+    document.getElementById('course-description').textContent = course.description || 'BBSS SYSTEM trading kursi';
+    document.getElementById('connection-note').textContent = isAdminPreview
+      ? 'Admin ko‘rishi: e’lon qilinmagan darslar ham ko‘rsatilmoqda. O‘quvchilarga hali ochilmagan.'
+      : 'Kurs katalogi yuklandi. Har bir video uchun kirish huquqi serverda tekshiriladi.';
+    document.getElementById('lesson-note').textContent = isAdminPreview
+      ? 'Admin ko‘rish rejimi. Kursni ommaga e’lon qilmaguningizcha o‘quvchilar darslarni ko‘rmaydi.'
+      : 'Video darslar faqat faol kurs ruxsati mavjud bo‘lsa ochiladi.';
+    renderModules(modules);
+  }
+
+  async function loadPublicCatalogFallback() {
+    const { data: course, error: courseError } = await db
+      .from('courses').select('id,title,slug,description,price,currency,is_published')
+      .eq('slug', 'bbss-trading-course').eq('is_published', true).maybeSingle();
+    if (courseError) throw courseError;
+    if (!course) return applyCatalog({ course: null, modules: [], admin: false });
+    const { data: modules, error: modulesError } = await db
+      .from('modules').select('id,course_id,title,description,sort_order,is_published')
+      .eq('course_id', course.id).eq('is_published', true).order('sort_order', { ascending: true });
+    if (modulesError) throw modulesError;
+    // Ommaviy sahifada darslarning maxsus server katalogi bo‘lmasa, modul nomlarini xavfsiz ko‘rsatamiz.
+    applyCatalog({ course, modules: (modules || []).map(m => ({ ...m, lessons: [] })), admin: false });
   }
 
   async function loadCourseCatalog() {
@@ -137,33 +204,16 @@
     const note = document.getElementById('connection-note');
     try {
       if (!db) throw new Error('Supabase JavaScript kutubxonasi yuklanmadi');
-      const { data: course, error: courseError } = await db
-        .from('courses')
-        .select('id,title,description,price,currency')
-        .eq('slug', 'bbss-trading-course')
-        .eq('is_published', true)
-        .maybeSingle();
-      if (courseError) throw courseError;
-      if (!course) {
-        status.textContent = 'Bazaga ulandi';
-        document.getElementById('course-title').textContent = 'Kurs hozircha e’lon qilinmagan';
-        document.getElementById('course-description').textContent = 'Kurs admin tomonidan e’lon qilingach shu yerda ko‘rinadi.';
-        note.textContent = 'Supabase bilan aloqa ishlayapti. Kurs hozircha maxfiy holatda — bu ataylab shunday.';
-        renderModules([]);
-        return;
+      const initData = tg && typeof tg.initData === 'string' ? tg.initData : '';
+      if (initData) {
+        const { data, error } = await db.functions.invoke('bbss-video-url', { body: { action: 'catalog', initData } });
+        if (!error && data && typeof data === 'object') {
+          applyCatalog(data);
+          return;
+        }
+        console.warn('Secure catalog function error:', error || data);
       }
-      document.getElementById('course-title').textContent = course.title || 'BBSS Trading Course';
-      document.getElementById('course-description').textContent = course.description || 'BBSS SYSTEM trading kursi';
-      status.textContent = 'Bazaga ulandi';
-      note.textContent = 'Kurs ma’lumotlari Supabase bazasidan yuklandi. Darslar va to‘lovlar hali ulanmagan.';
-      const { data: modules, error: modulesError } = await db
-        .from('modules')
-        .select('id,title,description,sort_order')
-        .eq('course_id', course.id)
-        .eq('is_published', true)
-        .order('sort_order', { ascending: true });
-      if (modulesError) throw modulesError;
-      renderModules(modules || []);
+      await loadPublicCatalogFallback();
     } catch (error) {
       console.error('Supabase catalog error:', error);
       status.textContent = 'Ulanishda xato';
@@ -172,6 +222,38 @@
       note.textContent = 'Supabase bilan ulanishda xatolik. GitHub Pages orqali ochib qayta tekshiring.';
       addEmpty(document.getElementById('home-module-list'), 'Modullarni yuklab bo‘lmadi.');
       addEmpty(document.getElementById('lesson-module-list'), 'Modullarni yuklab bo‘lmadi.');
+    }
+  }
+
+  async function openVideoLesson(lesson) {
+    const player = document.getElementById('video-player');
+    const frame = document.getElementById('video-frame');
+    const title = document.getElementById('video-title');
+    if (!tg || !tg.initData) {
+      showToast('Videoni ochish uchun BBSS SYSTEM botining ichidan kiring.');
+      return;
+    }
+    if (frame) frame.src = 'about:blank';
+    player.classList.add('active');
+    title.textContent = lesson.title || 'Video dars';
+    showToast('Darsga kirish huquqi tekshirilmoqda…');
+    try {
+      const { data, error } = await db.functions.invoke('bbss-video-url', {
+        body: { initData: tg.initData, lessonId: lesson.id }
+      });
+      if (error) {
+        let message = 'Video havolasini olishda xatolik.';
+        try { const body = await error.context.json(); if (body && body.error) message = body.error; } catch (_) {}
+        throw new Error(message);
+      }
+      if (!data || !data.embedUrl) throw new Error((data && data.error) || 'Server video havolasini qaytarmadi.');
+      frame.src = data.embedUrl;
+      player.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+      frame.src = 'about:blank';
+      title.textContent = lesson.title || 'Video dars';
+      showToast(error && error.message ? error.message : 'Darsni ochib bo‘lmadi.');
+      console.error('Video open error:', error);
     }
   }
 
