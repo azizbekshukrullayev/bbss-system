@@ -1067,7 +1067,7 @@ Deno.serve(async (req: Request) => {
       const answerBody = typeof body.bodyText === 'string' ? body.bodyText.trim().slice(0,4000) : '';
       if (!questionId || !answerBody) return jsonResponse({ error: 'Savolni va javob matnini tekshiring.' }, 400);
       const { data: question, error: questionError } = await db.from('qa_questions')
-        .select('id,course_id,status').eq('id', questionId).eq('course_id', courseId).maybeSingle();
+        .select('id,course_id,status,telegram_id,title').eq('id', questionId).eq('course_id', courseId).maybeSingle();
       if (questionError) throw questionError;
       if (!question) return jsonResponse({ error: 'Savol topilmadi.' }, 404);
       const { error: answerError } = await db.from('qa_answers').insert({
@@ -1079,6 +1079,32 @@ Deno.serve(async (req: Request) => {
         .update({ status: 'answered', updated_at: new Date().toISOString() })
         .eq('id', questionId).eq('course_id', courseId);
       if (statusError) throw statusError;
+
+      const questionAuthorId = String(question.telegram_id || '');
+      if (questionAuthorId && questionAuthorId !== telegramUser.id) {
+        const answererName = [
+          typeof telegramUser.firstName === 'string' ? telegramUser.firstName.trim() : '',
+          typeof telegramUser.lastName === 'string' ? telegramUser.lastName.trim() : '',
+        ].filter(Boolean).join(' ').slice(0, 120)
+          || (telegramUser.username ? '@' + telegramUser.username : 'BBSS SYSTEM o‘quvchisi');
+        try {
+          await callTelegramBotApi(telegramBotToken, 'sendMessage', {
+            chat_id: questionAuthorId,
+            text: '💬 Savolingizga javob keldi!\n\n' +
+              'Savol: ' + String(question.title || '').slice(0, 180) + '\n' +
+              'Javob yozgan: ' + answererName + '\n\n' +
+              'Javobni BBSS SYSTEM ichidagi Savol-javob bo‘limidan o‘qing.',
+            reply_markup: {
+              inline_keyboard: [[{
+                text: 'BBSS SYSTEM’ni ochish',
+                web_app: { url: APP_URL },
+              }]],
+            },
+          });
+        } catch (noticeError) {
+          console.warn('Q&A answer notification failed:', getDiagnostic(noticeError));
+        }
+      }
       return jsonResponse({ ok: true });
     } catch (error) {
       return jsonResponse({ error: getDiagnostic(error) || 'Javob yuborilmadi.' }, 400);
