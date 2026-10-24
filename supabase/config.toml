@@ -1,0 +1,19 @@
+project_id = "mhzplzekdgbvlkdjojaz"
+
+[functions.bbss-video-url]
+verify_jwt = false
+
+[functions.bbss-stars-payment]
+verify_jwt = true
+
+[functions.create-web-order]
+verify_jwt = true
+
+[functions.click-shop-api]
+verify_jwt = false
+
+[functions.payme-merchant-api]
+verify_jwt = false
+
+[functions.payment-status]
+verify_jwt = true
