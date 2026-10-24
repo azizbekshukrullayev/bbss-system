@@ -111,7 +111,7 @@
       <div style="height:18px"></div>
       <div class="info-row"><span>Akkaunt ID</span><strong id="profile-id">Demo rejim</strong></div>
       <div class="info-row"><span>Kurs holati</span><strong style="color:var(--gold)" id="course-status">Kirish kutilmoqda</strong></div>
-      <div class="info-row"><span>Faol modullar</span><strong>0 / 3</strong></div>
+      <div class="info-row"><span>Faol modullar</span><strong id="active-module-count">0 / 3</strong></div>
     </section>
     <section class="course-card admin-tools" id="admin-enrollments-panel" hidden aria-hidden="true" aria-live="polite">
       <div class="course-label">ADMIN BOSHQARUVI</div>
@@ -164,25 +164,50 @@
     if (file.size > 8 * 1024 * 1024) {
       throw new Error('Rasm 8 MB dan kichik bo‘lishi kerak.');
     }
-    if (typeof createImageBitmap !== 'function') {
-      throw new Error('Bu brauzer rasmni tayyorlay olmadi. Mini App’ni yangilab qayta urinib ko‘ring.');
+
+    let bitmap;
+    if (typeof createImageBitmap === 'function') {
+      bitmap = await createImageBitmap(file);
+    } else {
+      // Eski Telegram/iOS WebView uchun Image + object URL fallback.
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        bitmap = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve({
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+            drawSource: image,
+            close: () => {},
+          });
+          image.onerror = () => reject(new Error('Rasm fayli o‘qilmadi.'));
+          image.src = objectUrl;
+        });
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
     }
 
-    const bitmap = await createImageBitmap(file);
     try {
-      if (!bitmap.width || !bitmap.height) throw new Error('Rasm fayli o‘qilmadi.');
-      const sourceSide = Math.min(bitmap.width, bitmap.height);
-      const sourceX = Math.floor((bitmap.width - sourceSide) / 2);
-      const sourceY = Math.floor((bitmap.height - sourceSide) / 2);
+      const source = bitmap.drawSource || bitmap;
+      const width = bitmap.width || source.naturalWidth;
+      const height = bitmap.height || source.naturalHeight;
+      if (!width || !height) throw new Error('Rasm fayli o‘qilmadi.');
+
+      const sourceSide = Math.min(width, height);
+      const sourceX = Math.floor((width - sourceSide) / 2);
+      const sourceY = Math.floor((height - sourceSide) / 2);
       const canvas = document.createElement('canvas');
       canvas.width = 512;
       canvas.height = 512;
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Rasmni tayyorlash imkoni bo‘lmadi.');
-      context.drawImage(bitmap, sourceX, sourceY, sourceSide, sourceSide, 0, 0, 512, 512);
+
+      context.drawImage(source, sourceX, sourceY, sourceSide, sourceSide, 0, 0, 512, 512);
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
       if (!blob) throw new Error('Rasmni JPEG formatiga aylantirib bo‘lmadi.');
       if (blob.size > 750 * 1024) throw new Error('Rasm hajmi 750 KB dan katta. Boshqa rasm tanlang.');
+
       return await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Rasm o‘qilmadi.'));
@@ -190,7 +215,7 @@
         reader.readAsDataURL(blob);
       });
     } finally {
-      if (typeof bitmap.close === 'function') bitmap.close();
+      if (bitmap && typeof bitmap.close === 'function') bitmap.close();
     }
   }
 
@@ -544,10 +569,14 @@
     requestAnimationFrame(() => updateAdminTools());
     const course = catalog.course;
     const modules = Array.isArray(catalog.modules) ? catalog.modules : [];
+    const activeModuleCount = document.getElementById('active-module-count');
+    if (activeModuleCount) activeModuleCount.textContent = `${modules.length} / ${Math.max(3, modules.length)}`;
     loadedCourse = course;
     loadedModules = modules;
     document.getElementById('db-status').textContent = 'Bazaga ulandi';
     if (!course) {
+      const activeModuleCount = document.getElementById('active-module-count');
+      if (activeModuleCount) activeModuleCount.textContent = '0 / 3';
       if (accessRequired) {
         document.getElementById('course-title').textContent = 'Kirish huquqi kutilmoqda';
         document.getElementById('course-description').textContent = 'Admin Telegram Akkaunt ID raqamingizga ruxsat bergach, darslar shu yerda ochiladi.';
@@ -570,7 +599,7 @@
       ? 'Admin ko‘rishi: e’lon qilinmagan darslar ham ko‘rsatilmoqda. O‘quvchilarga hali ochilmagan.'
       : 'Kurs katalogi yuklandi. Har bir video uchun kirish huquqi serverda tekshiriladi.';
     document.getElementById('lesson-note').textContent = isAdminPreview
-      ? 'Admin ko‘rish rejimi. Kursni ommaga e’lon qilmaguningizcha o‘quvchilar darslarni ko‘rmaydi.'
+      ? 'Admin ko‘rish rejimi. Faqat admin va ruxsati faol o‘quvchilar video darslarni ochishi mumkin.'
       : 'Video darslar faqat faol kurs ruxsati mavjud bo‘lsa ochiladi.';
     renderModules(modules);
   }
@@ -594,24 +623,54 @@
     const note = document.getElementById('connection-note');
     try {
       if (!db) throw new Error('Supabase JavaScript kutubxonasi yuklanmadi');
+
       const initData = tg && typeof tg.initData === 'string' ? tg.initData : '';
       if (initData) {
-        const { data, error } = await db.functions.invoke('bbss-video-url', { body: { action: 'catalog', initData } });
-        if (!error && data && typeof data === 'object') {
-          applyCatalog(data);
-          return;
+        const { data, error } = await db.functions.invoke('bbss-video-url', {
+          body: { action: 'catalog', initData }
+        });
+
+        if (error) {
+          let serverMessage = '';
+          try {
+            const responseBody = error.context && await error.context.json();
+            if (responseBody && typeof responseBody.error === 'string') {
+              serverMessage = responseBody.error;
+            }
+          } catch (_) {}
+          console.error('Secure catalog function error:', error, serverMessage);
+          throw new Error('Telegram katalogini xavfsiz yuklab bo‘lmadi. Mini App’ni qayta oching; muammo qolsa, admin server loglarini tekshirsin.');
         }
-        console.warn('Secure catalog function error:', error || data);
+
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('Server katalog uchun noto‘g‘ri javob qaytardi.');
+        }
+        if (data.ok === false || data.error) {
+          console.error('Secure catalog response error:', data.error || data);
+          throw new Error('Server katalogni tasdiqlamadi. Mini App’ni qayta oching; muammo qolsa, admin server loglarini tekshirsin.');
+        }
+
+        applyCatalog(data);
+        return;
       }
+
+      // Ommaviy, brauzerda ko‘rish: faqat e’lon qilingan modul sarlavhalari.
       await loadPublicCatalogFallback();
     } catch (error) {
       console.error('Supabase catalog error:', error);
-      status.textContent = 'Ulanishda xato';
+      status.textContent = 'Server xatosi';
       document.getElementById('course-title').textContent = 'Kurs ma’lumotini yuklab bo‘lmadi';
-      document.getElementById('course-description').textContent = 'Internet va Supabase sozlamalarini tekshirish kerak.';
-      note.textContent = 'Supabase bilan ulanishda xatolik. GitHub Pages orqali ochib qayta tekshiring.';
-      addEmpty(document.getElementById('home-module-list'), 'Modullarni yuklab bo‘lmadi.');
-      addEmpty(document.getElementById('lesson-module-list'), 'Modullarni yuklab bo‘lmadi.');
+      document.getElementById('course-description').textContent = 'Telegram sessiyasi va server sozlamalarini tekshirish kerak.';
+      note.textContent = 'Xavfsiz katalogni yuklab bo‘lmadi. Mini App’ni qayta oching; muammo qolsa, admin Supabase Edge Function loglarini tekshirsin.';
+      accessRequired = true;
+      isAdminPreview = false;
+      updateAdminTools();
+      addEmpty(document.getElementById('home-module-list'), 'Katalog xavfsiz yuklanmadi.');
+      addEmpty(document.getElementById('lesson-module-list'), 'Katalog xavfsiz yuklanmadi.');
+      document.getElementById('module-count').textContent = '— modul';
+      const activeModuleCount = document.getElementById('active-module-count');
+      if (activeModuleCount) activeModuleCount.textContent = '0 / 3';
+      document.getElementById('course-status').textContent = 'Tekshirish kerak';
     }
   }
 
