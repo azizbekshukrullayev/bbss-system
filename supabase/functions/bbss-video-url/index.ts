@@ -1,10 +1,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const SITE_ORIGIN = 'https://azizbekshukrullayev.github.io';
-const APP_URL = 'https://azizbekshukrullayev.github.io/bbss-system/?v=20261024-learning-tools-1';
+const APP_URL = 'https://azizbekshukrullayev.github.io/bbss-system/?v=20261024-learning-tools-2';
 const COURSE_SLUG = 'bbss-trading-course';
 const BUNNY_LIBRARY_ID = '788308';
 const AVATAR_BUCKET = 'student-avatars';
+const JOURNAL_BUCKET = 'bbss-journal';
 const AVATAR_SIGNED_URL_SECONDS = 60 * 60;
 const MAX_AVATAR_BYTES = 750 * 1024;
 const TOKEN_LIFETIME_SECONDS = 15 * 60;
@@ -295,6 +296,21 @@ async function resolveStudentPhotoUrl(
     return null;
   }
 
+  return data.signedUrl;
+}
+
+async function resolveJournalScreenshotUrl(
+  db: ReturnType<typeof createClient>,
+  path: string | null | undefined,
+): Promise<string | null> {
+  if (!path || !/^\d{5,20}\/[0-9a-f-]{36}\.jpg$/i.test(path)) return null;
+  const { data, error } = await db.storage
+    .from(JOURNAL_BUCKET)
+    .createSignedUrl(path, AVATAR_SIGNED_URL_SECONDS);
+  if (error || !data?.signedUrl) {
+    console.warn('Trading journal screenshot URL failed:', error?.message || 'unknown storage error');
+    return null;
+  }
   return data.signedUrl;
 }
 
@@ -770,10 +786,14 @@ Deno.serve(async (req: Request) => {
         })),
       }));
       const journalQuery = await db.from('trading_journal_entries')
-        .select('id,symbol,direction,entry_price,stop_loss,take_profit,exit_price,outcome,setup,notes,created_at')
+        .select('id,symbol,direction,entry_price,stop_loss,take_profit,exit_price,outcome,setup,notes,screenshot_path,created_at')
         .eq('course_id', courseId).eq('telegram_id', telegramUser.id)
         .order('created_at', { ascending: false }).limit(50);
       if (journalQuery.error) throw journalQuery.error;
+      const journalEntries = await Promise.all((journalQuery.data || []).map(async (entry) => ({
+        ...entry,
+        screenshotUrl: await resolveJournalScreenshotUrl(db, entry.screenshot_path),
+      })));
       const certQuery = await db.from('certificates')
         .select('id,certificate_code,completed_lessons,total_lessons,issued_at')
         .eq('course_id', courseId).eq('telegram_id', telegramUser.id).order('issued_at', { ascending: false });
@@ -848,7 +868,7 @@ Deno.serve(async (req: Request) => {
           quizzes: quizQuery.data || [],
           announcements: announcementQuery.data || [],
           questions,
-          journal: journalQuery.data || [],
+          journal: journalEntries,
           certificates: certQuery.data || [],
           stats: {
             totalLessons: lessons.length,
@@ -1066,6 +1086,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (body.action === 'journal_add') {
+    let screenshotPath: string | null = null;
     try {
       const courseId = await getLearningCourseId();
       const symbol = typeof body.symbol === 'string' ? body.symbol : '';
@@ -1084,14 +1105,47 @@ Deno.serve(async (req: Request) => {
           [stopLoss,takeProfit,exitPrice].some((value) => value !== null && (!Number.isFinite(value) || value <= 0))) {
         return jsonResponse({ error: 'Bitim ma’lumotlarini to‘g‘ri kiriting.' }, 400);
       }
+
+      // Ixtiyoriy grafik skrinshoti: faqat JPEG, o‘lchami cheklangan va private bucket’da saqlanadi.
+      const imageData = typeof body.imageData === 'string' ? body.imageData : '';
+      if (imageData) {
+        const imageMatch = /^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/.exec(imageData);
+        if (!imageMatch || imageMatch[1].length > 1_050_000) {
+          return jsonResponse({ error: 'Skrinshot JPEG formatida bo‘lishi kerak.' }, 400);
+        }
+        const binary = atob(imageMatch[1]);
+        if (binary.length > MAX_AVATAR_BYTES) {
+          return jsonResponse({ error: 'Skrinshot 750 KB dan kichik bo‘lishi kerak.' }, 413);
+        }
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        if (bytes.length < 3 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) {
+          return jsonResponse({ error: 'Skrinshot fayli JPEG sifatida tasdiqlanmadi.' }, 400);
+        }
+        screenshotPath = telegramUser.id + '/' + crypto.randomUUID() + '.jpg';
+        const upload = await db.storage.from(JOURNAL_BUCKET).upload(screenshotPath, bytes, {
+          contentType: 'image/jpeg',
+          cacheControl: '3600',
+          upsert: false,
+        });
+        if (upload.error) throw new Error('Skrinshot saqlanmadi: ' + upload.error.message);
+      }
+
       const { data, error } = await db.from('trading_journal_entries').insert({
         course_id: courseId, telegram_id: telegramUser.id, symbol, direction,
         entry_price: entryPrice, stop_loss: stopLoss, take_profit: takeProfit,
-        exit_price: exitPrice, outcome, setup, notes,
-      }).select('id,symbol,direction,entry_price,stop_loss,take_profit,exit_price,outcome,setup,notes,created_at').single();
+        exit_price: exitPrice, outcome, setup, notes, screenshot_path: screenshotPath,
+      }).select('id,symbol,direction,entry_price,stop_loss,take_profit,exit_price,outcome,setup,notes,screenshot_path,created_at').single();
       if (error) throw error;
-      return jsonResponse({ ok: true, entry: data });
+      return jsonResponse({
+        ok: true,
+        entry: { ...data, screenshotUrl: await resolveJournalScreenshotUrl(db, data.screenshot_path) },
+      });
     } catch (error) {
+      if (screenshotPath) {
+        const cleanup = await db.storage.from(JOURNAL_BUCKET).remove([screenshotPath]);
+        if (cleanup.error) console.warn('Orphan journal screenshot cleanup failed:', cleanup.error.message);
+      }
       return jsonResponse({ error: getDiagnostic(error) || 'Bitim saqlanmadi.' }, 400);
     }
   }
@@ -1102,9 +1156,13 @@ Deno.serve(async (req: Request) => {
       const id = typeof body.questionId === 'string' ? body.questionId.trim() : '';
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return jsonResponse({ error: 'Bitim ID noto‘g‘ri.' }, 400);
       const { data, error } = await db.from('trading_journal_entries').delete()
-        .eq('id', id).eq('course_id', courseId).eq('telegram_id', telegramUser.id).select('id').maybeSingle();
+        .eq('id', id).eq('course_id', courseId).eq('telegram_id', telegramUser.id).select('id,screenshot_path').maybeSingle();
       if (error) throw error;
       if (!data) return jsonResponse({ error: 'Bitim topilmadi.' }, 404);
+      if (data.screenshot_path) {
+        const cleanup = await db.storage.from(JOURNAL_BUCKET).remove([data.screenshot_path]);
+        if (cleanup.error) console.warn('Journal screenshot delete failed:', cleanup.error.message);
+      }
       return jsonResponse({ ok: true });
     } catch (error) {
       return jsonResponse({ error: getDiagnostic(error) || 'Bitim o‘chirilmadi.' }, 400);
