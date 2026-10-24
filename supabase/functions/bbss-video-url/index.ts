@@ -689,18 +689,18 @@ Deno.serve(async (req: Request) => {
     return courseId;
   }
 
-  async function validateLearningLesson(courseId: string, lessonId: string) {
+  async function validateLearningLesson(courseId: string, lessonId: string, allowUnpublished = false) {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lessonId)) {
       throw new Error('Dars identifikatori noto‘g‘ri.');
     }
     const { data: lesson, error: lessonError } = await db.from('lessons')
       .select('id,module_id,is_published').eq('id', lessonId).maybeSingle();
     if (lessonError) throw lessonError;
-    if (!lesson || !lesson.is_published) throw new Error('Dars topilmadi yoki e’lon qilinmagan.');
+    if (!lesson || (!allowUnpublished && !lesson.is_published)) throw new Error('Dars topilmadi yoki e’lon qilinmagan.');
     const { data: module, error: moduleError } = await db.from('modules')
       .select('id,course_id,is_published').eq('id', lesson.module_id).eq('course_id', courseId).maybeSingle();
     if (moduleError) throw moduleError;
-    if (!module || !module.is_published) throw new Error('Dars ushbu kursga tegishli emas.');
+    if (!module || (!allowUnpublished && !module.is_published)) throw new Error('Dars ushbu kursga tegishli emas.');
     return lesson;
   }
 
@@ -708,20 +708,24 @@ Deno.serve(async (req: Request) => {
     try {
       const courseId = await getLearningCourseId();
       const { data: modules, error: modulesError } = await db.from('modules')
-        .select('id,title,sort_order').eq('course_id', courseId).eq('is_published', true).order('sort_order');
+        .select('id,title,sort_order,is_published').eq('course_id', courseId).order('sort_order');
       if (modulesError) throw modulesError;
-      const moduleRows = modules || [];
+      // Admin preview sees unpublished content for QA; students only receive published modules.
+      const moduleRows = (modules || []).filter((item) => isAdmin || item.is_published === true);
       const moduleIds = moduleRows.map((item) => item.id);
       const lessonQuery = moduleIds.length
-        ? await db.from('lessons').select('id,module_id,title,description,content_type,duration_seconds,sort_order')
-            .in('module_id', moduleIds).eq('is_published', true).order('sort_order')
+        ? await db.from('lessons').select('id,module_id,title,description,content_type,duration_seconds,sort_order,is_published')
+            .in('module_id', moduleIds).order('sort_order')
         : { data: [], error: null };
       if (lessonQuery.error) throw lessonQuery.error;
-      const lessons = (lessonQuery.data || []).map((lesson) => ({
-        ...lesson,
-        moduleTitle: moduleRows.find((mod) => mod.id === lesson.module_id)?.title || 'Modul',
-      }));
+      const lessons = (lessonQuery.data || [])
+        .filter((lesson) => isAdmin || lesson.is_published === true)
+        .map((lesson) => ({
+          ...lesson,
+          moduleTitle: moduleRows.find((mod) => mod.id === lesson.module_id)?.title || 'Modul',
+        }));
       const lessonIds = lessons.map((lesson) => lesson.id);
+      const publishedLessonIds = lessons.filter((lesson) => lesson.is_published === true).map((lesson) => lesson.id);
 
       const progressQuery = lessonIds.length
         ? await db.from('lesson_progress').select('lesson_id,is_completed,completed_at')
@@ -809,7 +813,7 @@ Deno.serve(async (req: Request) => {
           db.from('qa_questions').select('id', { count: 'exact', head: true }).eq('course_id', courseId).eq('status', 'open'),
           db.from('quiz_attempts').select('id', { count: 'exact', head: true }),
           db.from('trading_journal_entries').select('id', { count: 'exact', head: true }).eq('course_id', courseId),
-          db.from('lesson_progress').select('id', { count: 'exact', head: true }).eq('is_completed', true).in('lesson_id', lessonIds.length ? lessonIds : ['00000000-0000-0000-0000-000000000000']),
+          db.from('lesson_progress').select('id', { count: 'exact', head: true }).eq('is_completed', true).in('lesson_id', publishedLessonIds.length ? publishedLessonIds : ['00000000-0000-0000-0000-000000000000']),
         ]);
         for (const query of [enrollments,payments,requests,openQuestions,attempts,journalEntries,completed]) if (query.error) throw query.error;
         const activeRowsQuery = await db.from('enrollments')
@@ -824,9 +828,9 @@ Deno.serve(async (req: Request) => {
           ? await db.from('students').select('telegram_id,username,first_name,last_name').in('telegram_id', activeIds)
           : { data: [], error: null };
         if (activeProfilesQuery.error) throw activeProfilesQuery.error;
-        const activeProgressQuery = activeIds.length && lessonIds.length
+        const activeProgressQuery = activeIds.length && publishedLessonIds.length
           ? await db.from('lesson_progress').select('telegram_id,lesson_id')
-              .eq('is_completed', true).in('telegram_id', activeIds).in('lesson_id', lessonIds)
+              .eq('is_completed', true).in('telegram_id', activeIds).in('lesson_id', publishedLessonIds)
           : { data: [], error: null };
         if (activeProgressQuery.error) throw activeProgressQuery.error;
         const completedByStudent = new Map<string, Set<string>>();
@@ -844,8 +848,8 @@ Deno.serve(async (req: Request) => {
               || (profile.username ? '@' + profile.username : 'BBSS o‘quvchisi'),
             username: profile.username || null,
             completedLessons: completedCount,
-            totalLessons: lessons.length,
-            percent: lessons.length ? Math.round(completedCount * 100 / lessons.length) : 0,
+            totalLessons: publishedLessonIds.length,
+            percent: publishedLessonIds.length ? Math.round(completedCount * 100 / publishedLessonIds.length) : 0,
           };
         }).sort((a, b) => String(a.displayName).localeCompare(String(b.displayName), 'uz'));
         adminStats = {
@@ -891,7 +895,7 @@ Deno.serve(async (req: Request) => {
       const courseId = await getLearningCourseId();
       const lessonId = typeof body.lessonId === 'string' ? body.lessonId.trim() : '';
       const completed = body.completed === true;
-      await validateLearningLesson(courseId, lessonId);
+      await validateLearningLesson(courseId, lessonId, isAdmin);
       const { error } = await db.from('lesson_progress').upsert({
         telegram_id: telegramUser.id,
         lesson_id: lessonId,
@@ -910,7 +914,7 @@ Deno.serve(async (req: Request) => {
       const courseId = await getLearningCourseId();
       const lessonId = typeof body.lessonId === 'string' ? body.lessonId.trim() : '';
       const saved = body.saved === true;
-      await validateLearningLesson(courseId, lessonId);
+      await validateLearningLesson(courseId, lessonId, isAdmin);
       if (saved) {
         const { error } = await db.from('saved_lessons').upsert({
           course_id: courseId, telegram_id: telegramUser.id, lesson_id: lessonId,
@@ -1048,7 +1052,7 @@ Deno.serve(async (req: Request) => {
       const questionBody = typeof body.bodyText === 'string' ? body.bodyText.trim().slice(0,4000) : '';
       if (!title || !questionBody) return jsonResponse({ error: 'Savol sarlavhasi va matnini kiriting.' }, 400);
       const lessonId = typeof body.lessonId === 'string' ? body.lessonId.trim() : '';
-      if (lessonId) await validateLearningLesson(courseId, lessonId);
+      if (lessonId) await validateLearningLesson(courseId, lessonId, isAdmin);
       const { data, error } = await db.from('qa_questions').insert({
         course_id: courseId, telegram_id: telegramUser.id, lesson_id: lessonId || null,
         title, body: questionBody, status: 'open',
