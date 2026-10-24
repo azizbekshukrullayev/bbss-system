@@ -1023,6 +1023,7 @@
     const navScreen = screen === 'settings' ? 'profile' : screen;
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===navScreen));
     requestAnimationFrame(() => syncNavGlassIndicator(true));
+    if (screen === 'home' && !learningDashboard && tg && tg.initData && !accessRequired) loadLearningDashboard(true);
     window.scrollTo({top:0, behavior:'smooth'});
     if (screen === 'profile' && isAdminPreview) {
       loadAdminEnrollments();
@@ -1042,8 +1043,8 @@
   let learningToolsLoading = false;
   let activeQuiz = null;
 
-  async function loadLearningDashboard() {
-    if (learningToolsLoading || !document.getElementById('tools-screen')?.classList.contains('active')) return;
+  async function loadLearningDashboard(force = false) {
+    if (learningToolsLoading || (!force && !document.getElementById('tools-screen')?.classList.contains('active'))) return;
     learningToolsLoading = true;
     const list = document.getElementById('learning-progress-list');
     if (!learningDashboard && list) addEmpty(list, 'Ma’lumot yuklanmoqda…');
@@ -1051,9 +1052,14 @@
       const data = await invokeSecureAction('learning_dashboard');
       learningDashboard = data.dashboard || {};
       renderLearningDashboard();
+      renderHomeDashboard();
+      updateLessonScreenSummary();
     } catch (error) {
       if (list) addEmpty(list, error && error.message ? error.message : 'O‘quv vositalarini yuklab bo‘lmadi.');
-      showToast(error && error.message ? error.message : 'O‘quv vositalarini yuklab bo‘lmadi.');
+      const toolsVisible = document.getElementById('tools-screen')?.classList.contains('active');
+      if (toolsVisible) showToast(error && error.message ? error.message : 'O‘quv vositalarini yuklab bo‘lmadi.');
+      const dashboardStatus = document.getElementById('home-dashboard-status');
+      if (dashboardStatus && loadedCourse) dashboardStatus.textContent = 'OFFLINE / QAYTA URINING';
       console.error('Learning dashboard error:', error);
     } finally {
       learningToolsLoading = false;
@@ -1183,7 +1189,7 @@
 
   async function refreshLearningDashboard() {
     learningDashboard = null;
-    await loadLearningDashboard();
+    await loadLearningDashboard(true);
   }
 
   async function setLessonCompleted(lessonId, completed) {
@@ -1191,6 +1197,8 @@
       await invokeSecureAction('lesson_progress_set',{lessonId,completed});
       showToast(completed?'Dars tugallangan deb belgilandi.':'Dars belgisi olib tashlandi.');
       await refreshLearningDashboard();
+      updateLessonScreenSummary();
+      if (activeVideoLesson && String(activeVideoLesson.id) === String(lessonId)) renderVideoNavigation(activeVideoLesson);
     } catch(error) {
       showToast(error && error.message ? error.message : 'Progress saqlanmadi.');
     }
@@ -1618,6 +1626,7 @@
 
   let loadedCourse = null;
   let loadedModules = [];
+  let activeVideoLesson = null;
   let isAdminPreview = false;
   let accessRequired = false;
   let accessRequestStatus = null;
@@ -1638,6 +1647,8 @@
       addEmpty(homeList, emptyMessage);
       addEmpty(lessonList, emptyMessage);
       document.getElementById('module-count').textContent = '0 modul';
+      renderHomeDashboard();
+      updateLessonScreenSummary();
       return;
     }
     document.getElementById('module-count').textContent = modules.length + ' modul';
@@ -1648,7 +1659,10 @@
       const badge = document.createElement('div'); badge.className = 'num'; badge.textContent = number;
       const info = document.createElement('div'); info.className = 'module-info';
       const title = document.createElement('strong'); title.textContent = module.title || 'Modul';
-      const desc = document.createElement('span'); desc.textContent = module.description || 'Dars materiallari';
+      const moduleLessonCount = (Array.isArray(module.lessons) ? module.lessons : [])
+        .filter((lesson) => isAdminPreview || lesson.is_published !== false).length;
+      const desc = document.createElement('span');
+      desc.textContent = (module.description || 'Dars materiallari') + ' · ' + moduleLessonCount + ' dars';
       info.append(title, desc);
       const lock = document.createElement('span'); lock.className = 'lock'; lock.textContent = '▾';
       row.append(badge, info, lock); homeList.appendChild(row);
@@ -1682,6 +1696,185 @@
       }
       lessonList.appendChild(card);
     });
+    renderHomeDashboard();
+    updateLessonScreenSummary();
+  }
+
+  function getAllCourseLessons() {
+    const rows = [];
+    (Array.isArray(loadedModules) ? loadedModules : []).forEach((module) => {
+      const items = Array.isArray(module.lessons) ? module.lessons : [];
+      items.forEach((lesson) => {
+        if (!isAdminPreview && lesson.is_published === false) return;
+        rows.push({ ...lesson, moduleTitle: lesson.moduleTitle || module.title || 'Modul' });
+      });
+    });
+    return rows;
+  }
+
+  function getOrderedVideoLessons() {
+    return getAllCourseLessons().filter((lesson) => lesson.content_type === 'video');
+  }
+
+  function getLastLessonStorageKey() {
+    const telegramId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user
+      ? String(tg.initDataUnsafe.user.id || 'guest') : 'guest';
+    const slug = loadedCourse && loadedCourse.slug ? String(loadedCourse.slug) : 'bbss-trading-course';
+    return 'bbss:last-lesson:' + slug + ':' + telegramId;
+  }
+
+  function rememberLastOpenedLesson(lesson) {
+    if (!lesson || lesson.id === undefined || lesson.id === null) return;
+    try { localStorage.setItem(getLastLessonStorageKey(), String(lesson.id)); } catch (_) {}
+  }
+
+  function renderHomeDashboard() {
+    const panel = document.getElementById('home-dashboard-panel');
+    if (!panel) return;
+    const hasAccess = !!loadedCourse && (!accessRequired || isAdminPreview);
+    panel.hidden = !hasAccess;
+    if (!hasAccess) return;
+
+    const courseLessons = getAllCourseLessons();
+    const videoLessons = courseLessons.filter((lesson) => lesson.content_type === 'video');
+    const dashboardLessons = learningDashboard && Array.isArray(learningDashboard.lessons)
+      ? learningDashboard.lessons : courseLessons;
+    const validIds = new Set(dashboardLessons.map((lesson) => String(lesson.id)));
+    const completed = new Set(
+      (learningDashboard && Array.isArray(learningDashboard.completedLessonIds)
+        ? learningDashboard.completedLessonIds : []).map(String).filter((id) => validIds.has(id))
+    );
+    const total = dashboardLessons.length;
+    const percent = total ? Math.round(completed.size * 100 / total) : 0;
+    const setText = (id, value) => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = String(value);
+    };
+    setText('home-progress-percent', percent + '%');
+    setText('home-progress-completed', completed.size + ' / ' + total + ' dars');
+    setText('home-total-lessons', total);
+    setText('home-total-modules', loadedModules.length + ' modul');
+    setText('home-total-foot', videoLessons.length + ' ta video dars');
+    setText('home-progress-foot', learningDashboard
+      ? 'Progress tugallangan darslar asosida hisoblandi'
+      : 'Shaxsiy progress xavfsiz tarzda yuklanmoqda');
+    setText('home-dashboard-status', learningDashboard ? 'PROGRESS SINXRON' : 'SINXRONLANMOQDA');
+    const progressBar = document.getElementById('home-progress-bar');
+    if (progressBar) progressBar.style.width = percent + '%';
+
+    let lastLessonId = null;
+    try { lastLessonId = localStorage.getItem(getLastLessonStorageKey()); } catch (_) {}
+    const resumeLesson = videoLessons.find((lesson) => String(lesson.id) === String(lastLessonId)) ||
+      videoLessons.find((lesson) => !completed.has(String(lesson.id))) || videoLessons[0] || null;
+    const resumeTitle = document.getElementById('home-resume-title');
+    const resumeMeta = document.getElementById('home-resume-meta');
+    const resumeKicker = document.getElementById('home-resume-kicker');
+    const resumeButton = document.getElementById('home-resume-btn');
+    if (resumeLesson) {
+      if (resumeTitle) resumeTitle.textContent = resumeLesson.title || 'Video dars';
+      if (resumeMeta) resumeMeta.textContent = (resumeLesson.moduleTitle || 'BBSS COURSE') + ' · Video dars';
+      if (resumeKicker) resumeKicker.textContent = lastLessonId && String(lastLessonId) === String(resumeLesson.id)
+        ? 'OXIRGI KO‘RILGAN DARS' : 'KEYINGI DARS';
+      if (resumeButton) { resumeButton.disabled = false; resumeButton.removeAttribute('aria-disabled'); }
+    } else {
+      if (resumeTitle) resumeTitle.textContent = 'Darslar tayyor bo‘lganda shu yerda chiqadi';
+      if (resumeMeta) resumeMeta.textContent = 'Kurs bo‘limidan darslarni tanlang';
+      if (resumeKicker) resumeKicker.textContent = 'DAVOM ETTIRISH';
+      if (resumeButton) { resumeButton.disabled = true; resumeButton.setAttribute('aria-disabled', 'true'); }
+    }
+    const toolsNav = document.getElementById('nav-tools-btn');
+    const communityNav = document.getElementById('nav-chat-btn');
+    const toolsShortcut = document.getElementById('home-open-tools');
+    const communityShortcut = document.getElementById('home-open-community');
+    if (toolsShortcut) toolsShortcut.hidden = !toolsNav || toolsNav.hidden;
+    if (communityShortcut) communityShortcut.hidden = !communityNav || communityNav.hidden;
+  }
+
+  function updateLessonScreenSummary() {
+    const lessons = learningDashboard && Array.isArray(learningDashboard.lessons)
+      ? learningDashboard.lessons : getAllCourseLessons();
+    const ids = new Set(lessons.map((lesson) => String(lesson.id)));
+    const completed = new Set(
+      (learningDashboard && Array.isArray(learningDashboard.completedLessonIds)
+        ? learningDashboard.completedLessonIds : []).map(String).filter((id) => ids.has(id))
+    );
+    const total = lessons.length;
+    const percent = total ? Math.round(completed.size * 100 / total) : 0;
+    const setText = (id,value) => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = String(value);
+    };
+    setText('lesson-progress-percent', percent + '%');
+    setText('lesson-progress-count', completed.size + ' / ' + total + ' dars');
+    setText('lesson-module-count', (Array.isArray(loadedModules) ? loadedModules.length : 0) + ' modul');
+    setText('lesson-progress-label', learningDashboard ? 'PROGRESS YANGILANDI' : 'PROGRESS KUTILMOQDA');
+    setText('lesson-course-description', loadedCourse && loadedCourse.description
+      ? loadedCourse.description : 'Strategiyalaringizni darsma-dars rivojlantiring.');
+    const bar = document.getElementById('lesson-progress-bar');
+    if (bar) bar.style.width = percent + '%';
+  }
+
+  function continueLearning() {
+    const videos = getOrderedVideoLessons();
+    if (!videos.length) {
+      showScreen('lessons');
+      showToast('Hozircha ochish mumkin bo‘lgan video dars yo‘q.');
+      return;
+    }
+    let lastId = null;
+    try { lastId = localStorage.getItem(getLastLessonStorageKey()); } catch (_) {}
+    const completed = new Set(
+      (learningDashboard && Array.isArray(learningDashboard.completedLessonIds)
+        ? learningDashboard.completedLessonIds : []).map(String)
+    );
+    const lesson = videos.find((item) => String(item.id) === String(lastId)) ||
+      videos.find((item) => !completed.has(String(item.id))) || videos[0];
+    showScreen('lessons');
+    openVideoLesson(lesson);
+  }
+
+  function renderVideoNavigation(lesson) {
+    const controls = document.getElementById('lesson-video-controls');
+    if (!controls) return;
+    controls.hidden = !lesson;
+    if (!lesson) return;
+    const videos = getOrderedVideoLessons();
+    const index = videos.findIndex((item) => String(item.id) === String(lesson.id));
+    const previous = document.getElementById('lesson-prev-btn');
+    const next = document.getElementById('lesson-next-btn');
+    const complete = document.getElementById('lesson-complete-btn');
+    const moduleLabel = document.getElementById('video-module-label');
+    if (moduleLabel) moduleLabel.textContent = lesson.moduleTitle || 'BBSS COURSE';
+    if (previous) previous.disabled = index <= 0;
+    if (next) next.disabled = index < 0 || index >= videos.length - 1;
+    const completed = new Set(
+      (learningDashboard && Array.isArray(learningDashboard.completedLessonIds)
+        ? learningDashboard.completedLessonIds : []).map(String)
+    ).has(String(lesson.id));
+    if (complete) {
+      complete.hidden = isAdminPreview;
+      complete.disabled = completed;
+      complete.textContent = completed ? '✓ Dars tugallangan' : '✓ Dars tugallandi';
+      complete.classList.toggle('is-complete', completed);
+    }
+  }
+
+  function navigateVideoLesson(direction) {
+    const videos = getOrderedVideoLessons();
+    if (!activeVideoLesson || !videos.length) return;
+    const index = videos.findIndex((lesson) => String(lesson.id) === String(activeVideoLesson.id));
+    const nextIndex = index + Number(direction || 0);
+    if (nextIndex < 0 || nextIndex >= videos.length) return;
+    openVideoLesson(videos[nextIndex]);
+  }
+
+  async function completeActiveVideoLesson() {
+    if (!activeVideoLesson || isAdminPreview) return;
+    const complete = document.getElementById('lesson-complete-btn');
+    if (complete) { complete.disabled = true; complete.textContent = 'Saqlanmoqda…'; }
+    await setLessonCompleted(activeVideoLesson.id, true);
+    renderVideoNavigation(activeVideoLesson);
+    updateLessonScreenSummary();
   }
 
   function updateAdminTools() {
@@ -2835,6 +3028,9 @@
       ? 'Admin ko‘rish rejimi. Faqat admin va ruxsati faol o‘quvchilar video darslarni ochishi mumkin.'
       : 'Video darslar faqat faol kurs ruxsati mavjud bo‘lsa ochiladi.';
     renderModules(modules);
+    renderHomeDashboard();
+    updateLessonScreenSummary();
+    if (tg && tg.initData && !accessRequired) loadLearningDashboard(true);
   }
 
   async function loadPublicCatalogFallback() {
@@ -2919,9 +3115,15 @@
       showToast('Videoni ochish uchun BBSS SYSTEM botining ichidan kiring.');
       return;
     }
+    activeVideoLesson = lesson;
+    rememberLastOpenedLesson(lesson);
+    renderVideoNavigation(lesson);
+    updateLessonScreenSummary();
     if (frame) frame.src = 'about:blank';
     player.classList.add('active');
     title.textContent = lesson.title || 'Video dars';
+    const statusTag = document.getElementById('video-status');
+    if (statusTag) { statusTag.classList.remove('is-ready','is-error'); statusTag.classList.add('is-loading'); statusTag.innerHTML = '<i></i> RUXSAT TEKSHIRILMOQDA'; }
     showToast('Darsga kirish huquqi tekshirilmoqda…');
     try {
       const { data, error } = await db.functions.invoke('bbss-video-url', {
@@ -2934,10 +3136,15 @@
       }
       if (!data || !data.embedUrl) throw new Error((data && data.error) || 'Server video havolasini qaytarmadi.');
       frame.src = data.embedUrl;
+      const statusTag = document.getElementById('video-status');
+      if (statusTag) { statusTag.classList.remove('is-loading','is-error'); statusTag.classList.add('is-ready'); statusTag.innerHTML = '<i></i> PROTECTED STREAM ACTIVE'; }
+      renderVideoNavigation(lesson);
       player.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
       frame.src = 'about:blank';
       title.textContent = lesson.title || 'Video dars';
+      const statusTag = document.getElementById('video-status');
+      if (statusTag) { statusTag.classList.remove('is-loading','is-ready'); statusTag.classList.add('is-error'); statusTag.innerHTML = '<i></i> OQIM OCHILMADI'; }
       showToast(error && error.message ? error.message : 'Darsni ochib bo‘lmadi.');
       console.error('Video open error:', error);
     }
