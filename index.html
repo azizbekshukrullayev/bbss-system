@@ -262,7 +262,7 @@
     }
 
 </style>
-  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-dashboard-lesson-polish-1">
+  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-progress-completion-fix-1">
 </head>
 <body>
 <div class="app">
@@ -1044,7 +1044,19 @@
   let activeQuiz = null;
 
   async function loadLearningDashboard(force = false) {
-    if (learningToolsLoading || (!force && !document.getElementById('tools-screen')?.classList.contains('active'))) return;
+    if (!force && !document.getElementById('tools-screen')?.classList.contains('active')) return;
+    if (learningToolsLoading) {
+      if (!force) return;
+      let waited = 0;
+      while (learningToolsLoading && waited < 12000) {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        waited += 30;
+      }
+      if (learningToolsLoading) {
+        showToast('Progress yangilanishi kutilmoqda. Birozdan keyin qayta urinib ko‘ring.');
+        return;
+      }
+    }
     learningToolsLoading = true;
     const list = document.getElementById('learning-progress-list');
     if (!learningDashboard && list) addEmpty(list, 'Ma’lumot yuklanmoqda…');
@@ -1188,19 +1200,56 @@
   }
 
   async function refreshLearningDashboard() {
-    learningDashboard = null;
+    // Keep the last known progress visible until the fresh server response arrives.
     await loadLearningDashboard(true);
   }
 
   async function setLessonCompleted(lessonId, completed) {
     try {
-      await invokeSecureAction('lesson_progress_set',{lessonId,completed});
-      showToast(completed?'Dars tugallangan deb belgilandi.':'Dars belgisi olib tashlandi.');
-      await refreshLearningDashboard();
+      const result = await invokeSecureAction('lesson_progress_set',{lessonId:String(lessonId),completed:completed===true});
+      if (!result || result.ok !== true) throw new Error((result && result.error) || 'Server progressni tasdiqlamadi.');
+
+      if (!learningDashboard) {
+        learningDashboard = {
+          lessons: getAllCourseLessons(),
+          completedLessonIds: [],
+          savedLessonIds: [],
+          quizzes: [],
+          announcements: [],
+          questions: [],
+          journal: [],
+          certificates: [],
+        };
+      }
+      if (!Array.isArray(learningDashboard.completedLessonIds)) learningDashboard.completedLessonIds = [];
+      const completedIds = new Set(learningDashboard.completedLessonIds.map(String));
+      if (completed) completedIds.add(String(lessonId));
+      else completedIds.delete(String(lessonId));
+      learningDashboard.completedLessonIds = Array.from(completedIds);
+
+      // Update locally immediately after the server confirms the write; refresh in the background of this action.
+      renderLearningDashboard();
+      renderHomeDashboard();
       updateLessonScreenSummary();
-      if (activeVideoLesson && String(activeVideoLesson.id) === String(lessonId)) renderVideoNavigation(activeVideoLesson);
+      if (activeVideoLesson && String(activeVideoLesson.id) === String(lessonId)) {
+        renderVideoNavigation(activeVideoLesson);
+      }
+      showToast(completed?'Dars tugallangan deb saqlandi.':'Dars belgisi olib tashlandi.');
+      await refreshLearningDashboard();
+      renderHomeDashboard();
+      updateLessonScreenSummary();
+      if (activeVideoLesson && String(activeVideoLesson.id) === String(lessonId)) {
+        renderVideoNavigation(activeVideoLesson);
+      }
+      return true;
     } catch(error) {
+      if (learningDashboard) renderLearningDashboard();
+      renderHomeDashboard();
+      updateLessonScreenSummary();
+      if (activeVideoLesson) renderVideoNavigation(activeVideoLesson);
       showToast(error && error.message ? error.message : 'Progress saqlanmadi.');
+      console.error('Lesson progress save failed:', error);
+      return false;
     }
   }
 
@@ -1853,10 +1902,13 @@
     ).has(String(lesson.id));
     if (complete) {
       const streamReady = document.getElementById('video-status')?.classList.contains('is-ready') === true;
-      complete.hidden = isAdminPreview || !streamReady;
+      // Adminlar ham o‘z akkauntida progress amaliyotini sinab ko‘rishi mumkin;
+      // server baribir Telegram identifikatori va kurs ruxsatini tekshiradi.
+      complete.hidden = !streamReady;
       complete.disabled = completed || !streamReady;
       complete.textContent = completed ? '✓ Dars tugallangan' : '✓ Dars tugallandi';
       complete.classList.toggle('is-complete', completed);
+      complete.setAttribute('aria-label', completed ? 'Dars tugallangan' : 'Darsni tugallangan deb belgilash');
     }
   }
 
@@ -1870,10 +1922,25 @@
   }
 
   async function completeActiveVideoLesson() {
-    if (!activeVideoLesson || isAdminPreview) return;
+    if (!activeVideoLesson) {
+      showToast('Avval video darsni oching.');
+      return;
+    }
+    const streamReady = document.getElementById('video-status')?.classList.contains('is-ready') === true;
+    if (!streamReady) {
+      showToast('Avval video oqimi muvaffaqiyatli ochilishini kuting.');
+      return;
+    }
     const complete = document.getElementById('lesson-complete-btn');
-    if (complete) { complete.disabled = true; complete.textContent = 'Saqlanmoqda…'; }
-    await setLessonCompleted(activeVideoLesson.id, true);
+    if (complete) {
+      complete.disabled = true;
+      complete.textContent = 'Saqlanmoqda…';
+    }
+    const success = await setLessonCompleted(activeVideoLesson.id, true);
+    if (!success) {
+      renderVideoNavigation(activeVideoLesson);
+      return;
+    }
     renderVideoNavigation(activeVideoLesson);
     updateLessonScreenSummary();
   }
