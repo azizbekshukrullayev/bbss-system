@@ -760,57 +760,217 @@
     : null;
 
 
-  // iOS-style Liquid Glass pill that follows the selected bottom navigation item.
-  function syncNavGlassIndicator(animate = true) {
-    const nav = document.querySelector('.bottom-nav .nav-inner');
-    if (!nav) return;
-    let glass = nav.querySelector('.nav-glass-indicator');
-    if (!glass) {
-      glass = document.createElement('span');
-      glass.className = 'nav-glass-indicator';
-      glass.setAttribute('aria-hidden', 'true');
-      nav.prepend(glass);
-    }
-    const buttons = Array.from(nav.querySelectorAll('.nav-btn'));
-    const target = buttons.find((button) =>
-      button.classList.contains('active') &&
-      !button.hidden &&
-      button.getClientRects().length > 0 &&
+  // Interactive Liquid Glass navigation: hold, drag, release to select the nearest section.
+  const navGlassInteraction = {
+    pointerId:null,startX:0,startY:0,currentX:0,currentY:0,lastX:0,lastTime:0,
+    holdTimer:null,suppressTimer:null,holdReady:false,dragging:false,suppressClick:false,
+    previewButton:null,nav:null,glass:null
+  };
+
+  function getVisibleNavButtons(nav) {
+    return Array.from(nav.querySelectorAll('.nav-btn')).filter((button) =>
+      !button.hidden && button.getClientRects().length > 0 &&
       getComputedStyle(button).display !== 'none'
     );
-    if (!target) {
-      glass.style.opacity = '0';
-      return;
+  }
+
+  function findNearestNavButton(clientX,nav) {
+    const buttons=getVisibleNavButtons(nav);
+    let nearest=null,nearestDistance=Infinity;
+    for(const button of buttons){
+      const rect=button.getBoundingClientRect();
+      const distance=Math.abs(clientX-(rect.left+rect.width/2));
+      if(distance<nearestDistance){nearest=button;nearestDistance=distance;}
     }
-    const navRect = nav.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    const nextScreen = target.dataset.screen || '';
-    const changed = glass.dataset.screen !== nextScreen;
-    glass.style.setProperty('--glass-x', (targetRect.left - navRect.left + 1) + 'px');
-    glass.style.width = Math.max(0, targetRect.width - 2) + 'px';
-    glass.style.top = Math.max(0, targetRect.top - navRect.top + 1) + 'px';
-    glass.style.height = Math.max(0, targetRect.height - 2) + 'px';
-    glass.style.bottom = 'auto';
-    glass.style.opacity = '1';
-    if (changed && animate) {
-      glass.dataset.screen = nextScreen;
+    return nearest;
+  }
+
+  function clearNavGlassPreview() {
+    if(navGlassInteraction.previewButton){
+      navGlassInteraction.previewButton.classList.remove('drag-preview');
+      navGlassInteraction.previewButton=null;
+    }
+  }
+
+  function setNavGlassPreview(button) {
+    if(navGlassInteraction.previewButton===button)return;
+    clearNavGlassPreview();
+    if(button){navGlassInteraction.previewButton=button;button.classList.add('drag-preview');}
+  }
+
+  function updateNavGlassDrag(clientX,now=performance.now()) {
+    const nav=navGlassInteraction.nav||document.querySelector('.bottom-nav .nav-inner');
+    const glass=navGlassInteraction.glass||nav?.querySelector('.nav-glass-indicator');
+    if(!nav||!glass)return;
+    const navRect=nav.getBoundingClientRect();
+    const target=findNearestNavButton(clientX,nav);
+    if(!target)return;
+    const targetRect=target.getBoundingClientRect();
+    const width=Math.max(24,Math.min(targetRect.width-2,navRect.width));
+    const half=width/2;
+    const center=Math.max(navRect.left+half,Math.min(navRect.right-half,clientX));
+    const left=center-navRect.left-half+1;
+    const elapsed=Math.max(1,now-navGlassInteraction.lastTime);
+    const velocity=Math.min(1,Math.abs(clientX-navGlassInteraction.lastX)/elapsed/1.25);
+    glass.style.setProperty('--glass-x',left+'px');
+    glass.style.width=width+'px';
+    glass.style.top=Math.max(0,targetRect.top-navRect.top+1)+'px';
+    glass.style.height=Math.max(0,targetRect.height-2)+'px';
+    glass.style.setProperty('--glass-scale',(1+velocity*.16).toFixed(3));
+    glass.style.opacity='1';
+    glass.dataset.screen=target.dataset.screen||'';
+    setNavGlassPreview(target);
+    navGlassInteraction.lastX=clientX;
+    navGlassInteraction.lastTime=now;
+  }
+
+  function beginNavGlassDrag() {
+    const nav=navGlassInteraction.nav,glass=navGlassInteraction.glass;
+    if(!nav||!glass||navGlassInteraction.dragging)return;
+    navGlassInteraction.dragging=true;
+    if(navGlassInteraction.holdTimer)clearTimeout(navGlassInteraction.holdTimer);
+    navGlassInteraction.holdTimer=null;
+    glass.classList.remove('is-drag-ready');
+    glass.classList.add('is-dragging');
+    try{nav.setPointerCapture(navGlassInteraction.pointerId);}catch(_){}
+    if(navigator.vibrate){try{navigator.vibrate(7);}catch(_){}}
+    updateNavGlassDrag(navGlassInteraction.currentX);
+  }
+
+  function clearNavGlassPointerState() {
+    if(navGlassInteraction.holdTimer)clearTimeout(navGlassInteraction.holdTimer);
+    navGlassInteraction.holdTimer=null;
+    navGlassInteraction.pointerId=null;
+    navGlassInteraction.holdReady=false;
+    navGlassInteraction.dragging=false;
+    navGlassInteraction.currentX=0;navGlassInteraction.currentY=0;
+    navGlassInteraction.lastX=0;navGlassInteraction.lastTime=0;
+    clearNavGlassPreview();
+    if(navGlassInteraction.glass){
+      navGlassInteraction.glass.classList.remove('is-pressed','is-drag-ready','is-dragging');
+      navGlassInteraction.glass.style.setProperty('--glass-scale','1');
+    }
+  }
+
+  function finishNavGlassPointer(event,cancelled=false) {
+    if(navGlassInteraction.pointerId===null ||
+       (event&&event.pointerId!==navGlassInteraction.pointerId))return;
+    const wasDragging=navGlassInteraction.dragging;
+    const nav=navGlassInteraction.nav;
+    const target=wasDragging&&!cancelled&&nav
+      ?findNearestNavButton(navGlassInteraction.currentX,nav):null;
+    clearNavGlassPointerState();
+    if(wasDragging){
+      navGlassInteraction.suppressClick=true;
+      if(navGlassInteraction.suppressTimer)clearTimeout(navGlassInteraction.suppressTimer);
+      navGlassInteraction.suppressTimer=setTimeout(()=>{
+        navGlassInteraction.suppressClick=false;
+        navGlassInteraction.suppressTimer=null;
+      },450);
+    }
+    if(target&&target.dataset.screen){
+      requestAnimationFrame(()=>showScreen(target.dataset.screen));
+    }else{
+      requestAnimationFrame(()=>syncNavGlassIndicator(false));
+    }
+  }
+
+  function syncNavGlassIndicator(animate=true) {
+    const nav=document.querySelector('.bottom-nav .nav-inner');
+    if(!nav)return;
+    let glass=nav.querySelector('.nav-glass-indicator');
+    if(!glass){
+      glass=document.createElement('span');
+      glass.className='nav-glass-indicator';
+      glass.setAttribute('aria-hidden','true');
+      nav.prepend(glass);
+    }
+    setupNavGlassInteraction(nav,glass);
+    if(navGlassInteraction.dragging)return;
+    const target=getVisibleNavButtons(nav).find((button)=>button.classList.contains('active'));
+    if(!target){glass.style.opacity='0';return;}
+    const navRect=nav.getBoundingClientRect(),targetRect=target.getBoundingClientRect();
+    const nextScreen=target.dataset.screen||'';
+    const changed=glass.dataset.screen!==nextScreen;
+    glass.style.setProperty('--glass-x',(targetRect.left-navRect.left+1)+'px');
+    glass.style.width=Math.max(0,targetRect.width-2)+'px';
+    glass.style.top=Math.max(0,targetRect.top-navRect.top+1)+'px';
+    glass.style.height=Math.max(0,targetRect.height-2)+'px';
+    glass.style.setProperty('--glass-scale','1');
+    glass.style.bottom='auto';
+    glass.style.opacity='1';
+    if(changed&&animate){
+      glass.dataset.screen=nextScreen;
       glass.classList.remove('is-settling');
       void glass.offsetWidth;
       glass.classList.add('is-settling');
-    } else {
-      glass.dataset.screen = nextScreen;
+    }else{
+      glass.dataset.screen=nextScreen;
     }
   }
-  window.addEventListener('resize', () => requestAnimationFrame(() => syncNavGlassIndicator(false)), {passive:true});
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => requestAnimationFrame(() => syncNavGlassIndicator(false)), {passive:true});
+
+  function setupNavGlassInteraction(nav,glass) {
+    if(nav.dataset.glassDragReady==='true')return;
+    nav.dataset.glassDragReady='true';
+    navGlassInteraction.nav=nav;
+    navGlassInteraction.glass=glass;
+    nav.addEventListener('pointerdown',(event)=>{
+      if(event.button!==undefined&&event.button!==0)return;
+      if(navGlassInteraction.pointerId!==null)return;
+      const rect=glass.getBoundingClientRect();
+      if(event.clientX<rect.left||event.clientX>rect.right||
+         event.clientY<rect.top||event.clientY>rect.bottom)return;
+      navGlassInteraction.pointerId=event.pointerId;
+      navGlassInteraction.startX=event.clientX;navGlassInteraction.startY=event.clientY;
+      navGlassInteraction.currentX=event.clientX;navGlassInteraction.currentY=event.clientY;
+      navGlassInteraction.lastX=event.clientX;navGlassInteraction.lastTime=performance.now();
+      navGlassInteraction.holdReady=false;navGlassInteraction.dragging=false;
+      glass.classList.add('is-pressed');
+      navGlassInteraction.holdTimer=setTimeout(()=>{
+        if(navGlassInteraction.pointerId!==event.pointerId)return;
+        navGlassInteraction.holdReady=true;
+        glass.classList.add('is-drag-ready');
+        const dx=navGlassInteraction.currentX-navGlassInteraction.startX;
+        const dy=navGlassInteraction.currentY-navGlassInteraction.startY;
+        if(Math.hypot(dx,dy)>5)beginNavGlassDrag();
+      },190);
+    },true);
+
+    window.addEventListener('pointermove',(event)=>{
+      if(navGlassInteraction.pointerId!==event.pointerId)return;
+      navGlassInteraction.currentX=event.clientX;navGlassInteraction.currentY=event.clientY;
+      if(!navGlassInteraction.holdReady)return;
+      const dx=event.clientX-navGlassInteraction.startX;
+      const dy=event.clientY-navGlassInteraction.startY;
+      if(!navGlassInteraction.dragging&&Math.hypot(dx,dy)>6)beginNavGlassDrag();
+      if(navGlassInteraction.dragging){
+        if(event.cancelable)event.preventDefault();
+        updateNavGlassDrag(event.clientX);
+      }
+    },{passive:false});
+    window.addEventListener('pointerup',(event)=>finishNavGlassPointer(event,false));
+    window.addEventListener('pointercancel',(event)=>finishNavGlassPointer(event,true));
+    nav.addEventListener('click',(event)=>{
+      if(!navGlassInteraction.suppressClick)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      navGlassInteraction.suppressClick=false;
+      if(navGlassInteraction.suppressTimer)clearTimeout(navGlassInteraction.suppressTimer);
+      navGlassInteraction.suppressTimer=null;
+    },true);
   }
-  const navGlassObserver = new MutationObserver(() => requestAnimationFrame(() => syncNavGlassIndicator(false)));
-  const bottomNavForObserver = document.querySelector('.bottom-nav .nav-inner');
-  if (bottomNavForObserver) navGlassObserver.observe(bottomNavForObserver, {
-    attributes: true, subtree: true, attributeFilter: ['class', 'hidden']
+
+  window.addEventListener('resize',()=>requestAnimationFrame(()=>syncNavGlassIndicator(false)),{passive:true});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',()=>requestAnimationFrame(()=>syncNavGlassIndicator(false)),{passive:true});
+  }
+  const navGlassObserver=new MutationObserver(()=>{
+    if(!navGlassInteraction.dragging)requestAnimationFrame(()=>syncNavGlassIndicator(false));
   });
-  requestAnimationFrame(() => syncNavGlassIndicator(false));
+  const bottomNavForObserver=document.querySelector('.bottom-nav .nav-inner');
+  if(bottomNavForObserver)navGlassObserver.observe(bottomNavForObserver,{
+    attributes:true,subtree:true,attributeFilter:['class','hidden']
+  });
+  requestAnimationFrame(()=>syncNavGlassIndicator(false));
 
   function showScreen(screen) {
     if (screen !== 'chat') document.body.classList.remove('chat-fullscreen-mode');
