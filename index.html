@@ -58,7 +58,11 @@
     .chat-small-refresh{width:27px;height:27px;border:1px solid var(--line);border-radius:8px;background:#171719;color:var(--gold2);font-size:18px;line-height:1;padding:0}
     .chat-people-list{display:grid;gap:4px}
     .chat-person-row{display:flex;align-items:center;gap:9px;width:100%;padding:9px 8px;border:0;border-bottom:1px solid #242426;border-radius:0;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer;min-width:0}
-    .chat-person-avatar{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #4e4225;border-radius:50%;background:#211d13;color:var(--gold2);font-size:12px;font-weight:800}
+    .chat-person-avatar{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #4e4225;border-radius:50%;background:#211d13;color:var(--gold2);font-size:12px;font-weight:800;overflow:hidden;cursor:zoom-in;touch-action:manipulation}
+    .chat-avatar-lightbox{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.9);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);touch-action:manipulation}
+    .chat-avatar-lightbox-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));width:44px;height:44px;display:grid;place-items:center;border:1px solid #5a4a27;border-radius:50%;background:#19191b;color:#f2d57d;font-size:30px;line-height:1;cursor:pointer;box-shadow:0 5px 24px #0008}
+    .chat-avatar-lightbox-image{display:block;width:min(78vw,420px);height:min(78vw,420px);max-width:78vw;max-height:76vh;object-fit:cover;border:2px solid #8d7337;border-radius:50%;background:#211d13;box-shadow:0 18px 70px #000b}
+    .chat-avatar-lightbox-fallback{width:min(78vw,420px);height:min(78vw,420px);max-width:78vw;max-height:76vh;display:grid;place-items:center;border:2px solid #8d7337;border-radius:50%;background:radial-gradient(circle at 30% 25%,#302817,#141415 75%);color:var(--gold2);font-size:clamp(72px,22vw,170px);font-weight:800;box-shadow:0 18px 70px #000b}
     .chat-person-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left}
     .chat-person-copy strong{font-size:12px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .chat-person-copy small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -754,6 +758,67 @@
     }
   }
 
+  function openChatAvatar(photoUrl, name, initial) {
+    const root = document.createElement('div');
+    root.className = 'chat-avatar-lightbox';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', (name || 'Student') + ' profil rasmi');
+    root.tabIndex = -1;
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'chat-avatar-lightbox-close';
+    closeButton.setAttribute('aria-label', 'Rasmni kichraytirish va yopish');
+    closeButton.title = 'Yopish';
+    closeButton.textContent = '×';
+
+    const fallback = document.createElement('div');
+    fallback.className = 'chat-avatar-lightbox-fallback';
+    fallback.textContent = initial || 'B';
+    fallback.setAttribute('aria-label', (name || 'Student') + ' avatari');
+
+    const image = document.createElement('img');
+    image.className = 'chat-avatar-lightbox-image';
+    image.alt = (name || 'Student') + ' profil rasmi';
+    image.hidden = true;
+
+    const safeUrl = safeTelegramPhotoUrl(photoUrl);
+    if (safeUrl) {
+      image.onload = () => {
+        image.hidden = false;
+        fallback.hidden = true;
+      };
+      image.onerror = () => {
+        image.hidden = true;
+        fallback.hidden = false;
+      };
+      image.src = safeUrl;
+    } else {
+      fallback.hidden = false;
+    }
+
+    const close = () => {
+      document.removeEventListener('keydown', onKeyDown);
+      root.remove();
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      }
+    };
+
+    closeButton.addEventListener('click', close);
+    root.addEventListener('click', (event) => {
+      if (event.target === root) close();
+    });
+    document.addEventListener('keydown', onKeyDown);
+    root.append(closeButton, image, fallback);
+    document.body.appendChild(root);
+    closeButton.focus({ preventScroll: true });
+  }
+
   function renderChatDirectory(students) {
     const container = document.getElementById('direct-chat-people');
     if (!container) return;
@@ -772,9 +837,23 @@
       row.className = 'chat-person-row';
       row.setAttribute('aria-label', 'Shaxsiy chatni ochish: ' + name);
 
+      const initial = name.trim().slice(0, 1).toUpperCase() || 'B';
       const avatar = document.createElement('span');
       avatar.className = 'chat-person-avatar';
-      avatar.textContent = name.trim().slice(0, 1).toUpperCase() || 'B';
+      avatar.setAttribute('role', 'button');
+      avatar.setAttribute('tabindex', '0');
+      avatar.setAttribute('aria-label', name + ' avatarini kattalashtirish');
+      setAvatarPhoto(avatar, student.photoUrl || null, initial);
+
+      const enlargeAvatar = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openChatAvatar(student.photoUrl || null, name, initial);
+      };
+      avatar.addEventListener('click', enlargeAvatar);
+      avatar.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') enlargeAvatar(event);
+      });
 
       const copy = document.createElement('span');
       copy.className = 'chat-person-copy';
