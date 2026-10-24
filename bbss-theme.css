@@ -319,3 +319,124 @@ a.secondary{box-sizing:border-box}
 @media print{
   body{background:#fff!important;color:#111!important}
 }
+
+
+/* Liquid Glass — floating navigation dock */
+.bottom-nav{
+  isolation:isolate;
+  overflow:visible;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg,rgba(19,44,75,.61) 0%,rgba(5,14,31,.76) 28%,rgba(3,9,23,.88) 100%);
+  border-top:1px solid rgba(135,225,255,.20);
+  box-shadow:
+    0 -1px 0 rgba(255,255,255,.035),
+    0 -10px 35px rgba(0,0,0,.31),
+    0 -1px 22px rgba(0,142,255,.075);
+  -webkit-backdrop-filter:blur(30px) saturate(185%) contrast(110%);
+  backdrop-filter:blur(30px) saturate(185%) contrast(110%);
+}
+.bottom-nav::before{
+  content:"";
+  position:absolute;
+  top:0;left:clamp(18px,7vw,56px);right:clamp(18px,7vw,56px);
+  height:1px;pointer-events:none;z-index:0;
+  background:linear-gradient(90deg,transparent,rgba(0,234,255,.40) 22%,rgba(255,255,255,.6) 50%,rgba(74,132,255,.42) 78%,transparent);
+  opacity:.72;
+}
+.bottom-nav::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 0%,rgba(0,234,255,.075),transparent 36%),
+    radial-gradient(ellipse at 84% 0%,rgba(45,93,255,.095),transparent 42%);
+}
+.nav-inner{
+  position:relative;isolation:isolate;overflow:visible;
+  max-width:620px;
+  gap:4px;
+}
+.nav-glass-indicator{
+  position:absolute;left:0;top:1px;bottom:1px;width:0;
+  z-index:0;opacity:0;pointer-events:none;
+  border-radius:13px;
+  border:1px solid rgba(130,234,255,.38);
+  background:
+    linear-gradient(155deg,rgba(235,253,255,.19) 0%,rgba(88,197,255,.10) 26%,rgba(18,70,145,.16) 68%,rgba(0,234,255,.09) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.38),
+    inset 0 -1px 0 rgba(0,234,255,.12),
+    inset 1px 0 0 rgba(255,255,255,.07),
+    0 0 0 1px rgba(0,234,255,.025),
+    0 0 20px rgba(0,190,255,.10),
+    0 5px 18px rgba(0,0,0,.16);
+  -webkit-backdrop-filter:blur(19px) saturate(205%);
+  backdrop-filter:blur(19px) saturate(205%);
+  transform:translate3d(var(--glass-x,0px),0,0);
+  transition:
+    transform .62s cubic-bezier(.20,1.18,.35,1),
+    width .46s cubic-bezier(.20,1.05,.35,1),
+    top .22s ease,height .22s ease,opacity .20s ease;
+  will-change:transform,width;
+  contain:layout paint;
+}
+.nav-glass-indicator::before{
+  content:"";position:absolute;inset:1px;border-radius:11px;pointer-events:none;
+  background:linear-gradient(112deg,rgba(255,255,255,.17) 0%,rgba(255,255,255,.035) 28%,transparent 49%,rgba(0,234,255,.045) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+}
+.nav-glass-indicator::after{
+  content:"";position:absolute;top:3px;bottom:3px;left:-42%;width:30%;
+  border-radius:inherit;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(220,253,255,.28),rgba(0,234,255,.10),transparent);
+  filter:blur(3px);opacity:0;
+}
+.nav-glass-indicator.is-settling::after{
+  opacity:1;
+  animation:liquid-glass-reflection .72s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes liquid-glass-reflection{
+  0%{left:-42%;opacity:0}
+  15%{opacity:.95}
+  100%{left:112%;opacity:0}
+}
+.nav-btn{
+  z-index:1;min-height:43px;position:relative;
+  border:1px solid transparent;border-radius:12px;
+  background:transparent;
+  -webkit-tap-highlight-color:transparent;
+  transition:color .22s ease,transform .24s cubic-bezier(.2,.8,.2,1),text-shadow .22s ease;
+}
+.nav-btn:active{transform:scale(.925)}
+.nav-btn.active{
+  color:#d8fbff;background:transparent;border-color:transparent;box-shadow:none;
+  text-shadow:0 0 16px rgba(0,234,255,.15);
+}
+.nav-btn.active b{
+  color:#b7fbff;
+  text-shadow:0 0 6px rgba(0,234,255,.78),0 0 18px rgba(0,190,255,.45);
+  animation:liquid-icon-glow .48s ease-out both;
+}
+@keyframes liquid-icon-glow{
+  0%{transform:translateY(2px) scale(.86);filter:blur(1px);opacity:.55}
+  65%{transform:translateY(-1px) scale(1.09);filter:blur(0);opacity:1}
+  100%{transform:translateY(0) scale(1);filter:blur(0);opacity:1}
+}
+.nav-btn:not(.active){text-shadow:none}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .bottom-nav{background:rgba(4,10,25,.97)}
+  .nav-glass-indicator{background:linear-gradient(145deg,rgba(4,89,135,.78),rgba(17,41,93,.92))}
+}
+@media(max-width:380px){
+  .bottom-nav{padding-left:7px;padding-right:7px}
+  .nav-inner{gap:2px}
+  .nav-btn{min-height:41px;border-radius:10px}
+  .nav-glass-indicator{border-radius:11px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav-glass-indicator{transition:none;will-change:auto}
+  .nav-glass-indicator.is-settling::after,.nav-btn.active b{animation:none!important}
+  .nav-btn{transition:none}
+}
+@media print{
+  .bottom-nav,.nav-glass-indicator{display:none!important}
+}
