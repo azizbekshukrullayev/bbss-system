@@ -77,6 +77,8 @@
       <input id="student-telegram-id" class="admin-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="20" autocomplete="off" placeholder="Masalan: 123456789" />
       <button class="primary" id="grant-access-btn" type="button">Kirish huquqini berish</button>
       <div class="note" id="admin-grant-note">To‘lovni o‘zingiz tekshirganingizdan keyingina ruxsat bering. Amal darhol kuchga kiradi.</div>
+      <button class="secondary" id="configure-bot-webhook-btn" type="button">Telegram botni sozlash</button>
+      <div class="note" id="configure-bot-webhook-note" aria-live="polite">Bir marta sozlang. Shundan keyin bot /buy va chek xabarlarini qabul qiladi.</div>
     </section>
     <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
     <section class="course-card">
@@ -761,8 +763,70 @@
     });
   }
 
+  async function configureBotWebhook() {
+    const button = document.getElementById('configure-bot-webhook-btn');
+    const note = document.getElementById('configure-bot-webhook-note');
+
+    if (!tg || !tg.initData) {
+      showToast('Telegram bot ichidan admin akkaunt bilan oching.');
+      return;
+    }
+    if (!isAdminPreview) {
+      showToast('Bu amal faqat admin uchun.');
+      return;
+    }
+    if (!db) {
+      showToast('Supabase bilan aloqa yo‘q.');
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Bot sozlanmoqda…';
+    }
+    if (note) note.textContent = 'Telegram webhook xavfsiz sozlanmoqda…';
+
+    try {
+      const { data, error } = await db.functions.invoke('bbss-video-url', {
+        body: { action: 'configure_bot_webhook', initData: tg.initData }
+      });
+
+      if (error) {
+        let message = 'Telegram botni sozlab bo‘lmadi.';
+        try {
+          const responseBody = error.context && await error.context.json();
+          if (responseBody && responseBody.error) message = responseBody.error;
+        } catch (_) {}
+        throw new Error(message);
+      }
+
+      if (!data || data.ok !== true) {
+        throw new Error((data && data.error) || 'Server bot sozlamasini tasdiqlamadi.');
+      }
+
+      if (note) {
+        note.textContent = 'Bot webhooki sozlandi. /buy orqali to‘lov ma’lumotlari so‘raladi; chek yuborilgach, u adminingizga keladi.';
+      }
+      showToast('Telegram bot sozlandi.');
+    } catch (error) {
+      const message = error && error.message
+        ? error.message
+        : 'Telegram botni sozlashda xatolik.';
+      if (note) note.textContent = message;
+      showToast(message);
+      console.error('Telegram webhook setup error:', error);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Telegram botni sozlash';
+      }
+    }
+  }
+
   const grantAccessButton = document.getElementById('grant-access-btn');
   if (grantAccessButton) grantAccessButton.addEventListener('click', grantCourseAccess);
+  const configureBotWebhookButton = document.getElementById('configure-bot-webhook-btn');
+  if (configureBotWebhookButton) configureBotWebhookButton.addEventListener('click', configureBotWebhook);
   const refreshEnrollmentsButton = document.getElementById('refresh-enrollments-btn');
   if (refreshEnrollmentsButton) refreshEnrollmentsButton.addEventListener('click', () => loadAdminEnrollments());
 
