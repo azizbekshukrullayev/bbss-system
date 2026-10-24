@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0b0c" />
+  <meta name="theme-color" content="#090b0e" />
   <title>BBSS SYSTEM — Trading Education</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -262,6 +262,7 @@
     }
 
 </style>
+  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-atelier-ui-1">
 </head>
 <body>
 <div class="app">
@@ -496,6 +497,8 @@
       <div class="info-row"><span>Kurs holati</span><strong style="color:var(--gold)" id="course-status">Kirish kutilmoqda</strong></div>
       <div class="info-row"><span>Faol modullar</span><strong id="active-module-count">0 / 3</strong></div>
     </section>
+    <button class="secondary profile-settings-link" type="button" onclick="showScreen('settings')"><span aria-hidden="true">⚙</span><span>Sozlamalar</span><span aria-hidden="true">↗</span></button>
+
     <section class="course-card admin-tools" id="admin-enrollments-panel" hidden aria-hidden="true" aria-live="polite">
       <div class="course-label">ADMIN BOSHQARUVI</div>
       <h4>Ruxsat berilgan o‘quvchilar</h4>
@@ -580,7 +583,7 @@
 
   <p class="smallprint">© BBSS SYSTEM · Darslarga kirish serverda tekshiriladi.</p>
 </div>
-<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>☷</b>Chat</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button><button class="nav-btn" id="nav-tools-btn" data-screen="tools" onclick="showScreen('tools')" hidden><b>▣</b>Amaliyot</button><button class="nav-btn" data-screen="settings" onclick="showScreen('settings')"><b>⚙</b>Sozlamalar</button></div></nav>
+<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Kurslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>◌</b>Community</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button><button class="nav-btn" id="nav-tools-btn" data-screen="tools" onclick="showScreen('tools')" hidden><b>▣</b>Amaliyot</button><button class="nav-btn" id="nav-settings-btn" data-screen="settings" onclick="showScreen('settings')"><b>⚙</b>Sozlamalar</button></div></nav>
 <div class="toast" id="toast"></div>
 <script>
   function safeTelegramPhotoUrl(value) {
