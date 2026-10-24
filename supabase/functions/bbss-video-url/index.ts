@@ -780,6 +780,7 @@ Deno.serve(async (req: Request) => {
       if (certQuery.error) throw certQuery.error;
 
       let adminStats: Record<string, unknown> | null = null;
+      let adminProgress: Array<Record<string, unknown>> = [];
       if (isAdmin) {
         const [enrollments, payments, requests, openQuestions, attempts, journalEntries, completed] = await Promise.all([
           db.from('enrollments').select('id', { count: 'exact', head: true }).eq('course_id', courseId).eq('status', 'active'),
@@ -791,8 +792,44 @@ Deno.serve(async (req: Request) => {
           db.from('lesson_progress').select('id', { count: 'exact', head: true }).eq('is_completed', true).in('lesson_id', lessonIds.length ? lessonIds : ['00000000-0000-0000-0000-000000000000']),
         ]);
         for (const query of [enrollments,payments,requests,openQuestions,attempts,journalEntries,completed]) if (query.error) throw query.error;
+        const activeRowsQuery = await db.from('enrollments')
+          .select('telegram_id,expires_at')
+          .eq('course_id', courseId).eq('status', 'active').limit(500);
+        if (activeRowsQuery.error) throw activeRowsQuery.error;
+        const nowForEnrollments = Date.now();
+        const activeIds = [...new Set((activeRowsQuery.data || [])
+          .filter((row) => !row.expires_at || new Date(row.expires_at).getTime() > nowForEnrollments)
+          .map((row) => String(row.telegram_id)))];
+        const activeProfilesQuery = activeIds.length
+          ? await db.from('students').select('telegram_id,username,first_name,last_name').in('telegram_id', activeIds)
+          : { data: [], error: null };
+        if (activeProfilesQuery.error) throw activeProfilesQuery.error;
+        const activeProgressQuery = activeIds.length && lessonIds.length
+          ? await db.from('lesson_progress').select('telegram_id,lesson_id')
+              .eq('is_completed', true).in('telegram_id', activeIds).in('lesson_id', lessonIds)
+          : { data: [], error: null };
+        if (activeProgressQuery.error) throw activeProgressQuery.error;
+        const completedByStudent = new Map<string, Set<string>>();
+        for (const row of activeProgressQuery.data || []) {
+          const studentId = String(row.telegram_id);
+          if (!completedByStudent.has(studentId)) completedByStudent.set(studentId, new Set());
+          completedByStudent.get(studentId)!.add(String(row.lesson_id));
+        }
+        adminProgress = (activeProfilesQuery.data || []).map((profile) => {
+          const id = String(profile.telegram_id);
+          const completedCount = completedByStudent.get(id)?.size || 0;
+          return {
+            telegramId: id,
+            displayName: [profile.first_name || '', profile.last_name || ''].filter(Boolean).join(' ').trim()
+              || (profile.username ? '@' + profile.username : 'BBSS o‘quvchisi'),
+            username: profile.username || null,
+            completedLessons: completedCount,
+            totalLessons: lessons.length,
+            percent: lessons.length ? Math.round(completedCount * 100 / lessons.length) : 0,
+          };
+        }).sort((a, b) => String(a.displayName).localeCompare(String(b.displayName), 'uz'));
         adminStats = {
-          activeStudents: enrollments.count || 0,
+          activeStudents: activeIds.length,
           pendingPayments: payments.count || 0,
           pendingAccessRequests: requests.count || 0,
           openQuestions: openQuestions.count || 0,
@@ -819,6 +856,7 @@ Deno.serve(async (req: Request) => {
             savedLessons: (savedQuery.data || []).length,
           },
           adminStats,
+          adminProgress,
         },
       });
     } catch (error) {
