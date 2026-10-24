@@ -262,7 +262,7 @@
     }
 
 </style>
-  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-liquid-glass-drag-1">
+  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-dashboard-lesson-polish-1">
 </head>
 <body>
 <div class="app">
@@ -1852,8 +1852,9 @@
         ? learningDashboard.completedLessonIds : []).map(String)
     ).has(String(lesson.id));
     if (complete) {
-      complete.hidden = isAdminPreview;
-      complete.disabled = completed;
+      const streamReady = document.getElementById('video-status')?.classList.contains('is-ready') === true;
+      complete.hidden = isAdminPreview || !streamReady;
+      complete.disabled = completed || !streamReady;
       complete.textContent = completed ? '✓ Dars tugallangan' : '✓ Dars tugallandi';
       complete.classList.toggle('is-complete', completed);
     }
@@ -3115,8 +3116,9 @@
       showToast('Videoni ochish uchun BBSS SYSTEM botining ichidan kiring.');
       return;
     }
+    const enrichedLesson = getOrderedVideoLessons().find((item) => String(item.id) === String(lesson.id));
+    if (enrichedLesson) lesson = enrichedLesson;
     activeVideoLesson = lesson;
-    rememberLastOpenedLesson(lesson);
     renderVideoNavigation(lesson);
     updateLessonScreenSummary();
     if (frame) frame.src = 'about:blank';
@@ -3138,6 +3140,8 @@
       frame.src = data.embedUrl;
       const statusTag = document.getElementById('video-status');
       if (statusTag) { statusTag.classList.remove('is-loading','is-error'); statusTag.classList.add('is-ready'); statusTag.innerHTML = '<i></i> PROTECTED STREAM ACTIVE'; }
+      rememberLastOpenedLesson(lesson);
+      renderHomeDashboard();
       renderVideoNavigation(lesson);
       player.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
