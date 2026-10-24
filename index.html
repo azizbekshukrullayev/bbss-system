@@ -685,6 +685,7 @@
   }
 
   function openGroupChat() {
+    groupHasRendered = false;
     document.body.classList.add('chat-fullscreen-mode');
     const hub = document.getElementById('chat-hub-view');
     const group = document.getElementById('group-chat-view');
