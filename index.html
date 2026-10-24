@@ -190,23 +190,22 @@
 
     // Foydalanuvchi rasmi <img> sifatida qo'shilmaydi: background avatar
     // konteyneridan tashqariga kengaya olmaydi, hatto Telegram WebView'da ham.
-    const escapedUrl = safeUrl.replace(/["\\\\\n\r]/g, (char) => '\\\\' + char);
+    // URL new URL() orqali tekshirilgan; JSON.stringify CSS qo'shtirnoqlarini xavfsiz qiladi.
     element.style.setProperty(
       'background-image',
-      'url("' + escapedUrl + '")',
+      'url(' + JSON.stringify(safeUrl) + ')',
       'important',
     );
     element.setAttribute('aria-label', 'Profil rasmi');
 
     const probe = new Image();
     probe.onload = () => {
-      // Rasm yuklanayotganda boshqa rasm bilan almashtirilgan bo'lsa, tegmang.
-      if (element.style.backgroundImage.includes(escapedUrl)) {
+      if (element.style.backgroundImage.includes(safeUrl)) {
         element.textContent = '';
       }
     };
     probe.onerror = () => {
-      if (element.style.backgroundImage.includes(escapedUrl)) {
+      if (element.style.backgroundImage.includes(safeUrl)) {
         element.style.removeProperty('background-image');
         element.textContent = fallback || 'B';
       }
