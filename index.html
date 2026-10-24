@@ -149,24 +149,87 @@
     } catch (_) { return null; }
   }
   function setAvatarPhoto(element, photoUrl, fallback = 'B') {
-    if (!element) return;
-    element.replaceChildren();
-    const safeUrl = safeTelegramPhotoUrl(photoUrl);
-    if (!safeUrl) {
-      element.textContent = fallback || 'B';
-      return;
-    }
-    const img = document.createElement('img');
-    img.src = safeUrl;
-    img.alt = 'Telegram profil rasmi';
-    img.loading = 'lazy';
-    img.referrerPolicy = 'no-referrer';
-    img.addEventListener('error', () => {
-      element.replaceChildren();
-      element.textContent = fallback || 'B';
-    }, { once: true });
-    element.appendChild(img);
+  if (!element) return;
+
+  // Avatar turiga qarab qat'iy o'lcham belgilash.
+  let size = null;
+
+  if (element.classList.contains('big-avatar')) {
+    size = 66;
+  } else if (element.classList.contains('admin-enrollment-avatar')) {
+    size = 30;
+  } else if (element.classList.contains('avatar')) {
+    size = 38;
   }
+
+  // Rasm avatar maydonidan tashqariga chiqmasin.
+  element.style.setProperty('position', 'relative', 'important');
+  element.style.setProperty('overflow', 'hidden', 'important');
+  element.style.setProperty('box-sizing', 'border-box', 'important');
+  element.style.setProperty('isolation', 'isolate', 'important');
+
+  if (size !== null) {
+    element.style.setProperty('width', size + 'px', 'important');
+    element.style.setProperty('height', size + 'px', 'important');
+    element.style.setProperty('min-width', size + 'px', 'important');
+    element.style.setProperty('min-height', size + 'px', 'important');
+    element.style.setProperty('max-width', size + 'px', 'important');
+    element.style.setProperty('max-height', size + 'px', 'important');
+    element.style.setProperty('flex-shrink', '0', 'important');
+  }
+
+  element.replaceChildren();
+
+  const safeUrl = safeTelegramPhotoUrl(photoUrl);
+
+  if (!safeUrl) {
+    element.textContent = fallback || 'B';
+    return;
+  }
+
+  const img = document.createElement('img');
+
+  img.src = safeUrl;
+  img.alt = 'Profil rasmi';
+  img.loading = 'lazy';
+  img.referrerPolicy = 'no-referrer';
+  img.draggable = false;
+
+  // Rasm faqat avatar ichida joylashadi.
+  const imageStyles = {
+    position: 'absolute',
+    inset: '0',
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    minWidth: '0',
+    minHeight: '0',
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'cover',
+    objectPosition: 'center',
+    borderRadius: 'inherit',
+    margin: '0',
+    padding: '0',
+    boxSizing: 'border-box',
+    pointerEvents: 'none'
+  };
+
+  Object.entries(imageStyles).forEach(([key, value]) => {
+    img.style.setProperty(
+      key.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase()),
+      value,
+      'important'
+    );
+  });
+
+  img.addEventListener('error', () => {
+    element.replaceChildren();
+    element.textContent = fallback || 'B';
+  }, { once: true });
+
+  element.appendChild(img);
+}
 
   async function prepareAvatarImage(file) {
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
