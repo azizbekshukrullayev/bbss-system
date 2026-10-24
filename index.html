@@ -50,9 +50,18 @@
     .admin-enrollment-actions{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:6px 0 0 37px;padding-top:6px;border-top:1px solid #29292b}
     .admin-enrollment-actions[hidden]{display:none!important}
     .admin-enrollment-date{font-size:10px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
-    .admin-access-request-actions{display:flex;gap:7px;margin-top:9px}
-    .admin-access-request-actions .primary,.admin-access-request-actions .secondary{width:auto;flex:1;margin:0;padding:8px 9px;font-size:11px}
+    .admin-access-request-actions{display:flex;gap:7px;margin-top:7px}
+    .admin-access-request-actions .primary,.admin-access-request-actions .secondary{width:auto;flex:1;margin:0;padding:7px 8px;font-size:10px;line-height:1.2}
     .admin-access-request-actions .secondary{border-color:#743b3b;color:#ffb4b4;background:#211314}
+    .admin-access-requests-compact{padding:12px;margin-top:12px}
+    .admin-access-request-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .admin-access-request-heading h4{font-size:14px;margin:3px 0 0}
+    .admin-access-request-heading .course-label{font-size:9px;letter-spacing:1px}
+    .admin-request-refresh{width:30px;height:30px;flex:0 0 30px;margin:0;padding:0;border:1px solid #554824;border-radius:9px;background:#1b1913;color:var(--gold2);font-size:20px;line-height:1}
+    .admin-request-refresh:disabled{opacity:.5}
+    .admin-access-requests-compact .note{font-size:11px;padding:7px 9px;margin-top:8px}
+    .admin-access-requests-compact .admin-enrollment-list{gap:5px;margin-top:7px}
+    .admin-access-requests-compact .admin-enrollment-item{padding:7px 8px}
     .access-request-panel[hidden]{display:none!important}
     #admin-access-requests-panel.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
     #admin-access-requests-panel[hidden]{display:none!important}
@@ -96,14 +105,7 @@
       <button class="secondary" id="configure-bot-webhook-btn" type="button">Telegram botni sozlash</button>
       <div class="note" id="configure-bot-webhook-note" aria-live="polite">Bir marta sozlang. Shundan keyin bot /buy va chek xabarlarini qabul qiladi.</div>
     </section>
-    <section class="course-card admin-tools" id="admin-access-requests-panel" hidden aria-hidden="true" aria-live="polite">
-      <div class="course-label">ADMIN BOSHQARUVI</div>
-      <h4>Kursga kirish so‘rovlari</h4>
-      <p>Yangi o‘quvchilarning ruxsat so‘rovlarini shu yerda ko‘rib chiqing.</p>
-      <button class="secondary" id="refresh-access-requests-btn" type="button">So‘rovlarni yangilash</button>
-      <div class="note" id="admin-access-requests-note" aria-live="polite">So‘rovlar yuklanmoqda…</div>
-      <div class="admin-enrollment-list" id="admin-access-requests-list"><div class="empty">So‘rovlar yuklanmoqda…</div></div>
-    </section>
+
     <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
     <section class="course-card">
       <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4 id="course-title">BBSS Trading Course</h4><p id="course-description">Supabase’dan ma’lumot olinmoqda…</p></div><span class="pill" id="module-count">— modul</span></div>
@@ -150,6 +152,18 @@
       <button class="secondary" id="refresh-enrollments-btn" type="button">Ro‘yxatni yangilash</button>
       <div class="note" id="admin-enrollments-note" aria-live="polite">Ro‘yxat yuklanmoqda…</div>
       <div class="admin-enrollment-list" id="admin-enrollments-list"><div class="empty">Ro‘yxat yuklanmoqda…</div></div>
+    </section>
+
+    <section class="course-card admin-tools admin-access-requests-compact" id="admin-access-requests-panel" hidden aria-hidden="true" aria-live="polite">
+      <div class="admin-access-request-heading">
+        <div>
+          <div class="course-label">ADMIN BOSHQARUVI</div>
+          <h4>Kirish so‘rovlari</h4>
+        </div>
+        <button class="admin-request-refresh" id="refresh-access-requests-btn" type="button" aria-label="So‘rovlarni yangilash" title="Yangilash">↻</button>
+      </div>
+      <div class="note" id="admin-access-requests-note" aria-live="polite">So‘rovlar yuklanmoqda…</div>
+      <div class="admin-enrollment-list" id="admin-access-requests-list"><div class="empty">So‘rovlar yuklanmoqda…</div></div>
     </section>
 
     <div class="note">Telegram ichida ochilganda profil ma’lumotlari ko‘rsatilishi mumkin. Haqiqiy kirish huquqi serverda tekshirilishi shart.</div>
