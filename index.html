@@ -860,12 +860,19 @@
     savedLessons.forEach((lesson) => {
       const card = learningItem(lesson.title,lesson.moduleTitle,lesson.description || '');
       const actions = learningEl('div','learning-item-actions');
+      const open = learningEl('button','learning-mini-btn',lesson.content_type==='video'?'Videoni ochish':'Darslarga o‘tish');
+      open.type='button';
+      open.addEventListener('click',()=>{
+        showScreen('lessons');
+        if(lesson.content_type==='video') openVideoLesson(lesson);
+        else showToast('PDF materialini ochish hozircha kurs sahifasida qo‘llab-quvvatlanmaydi.');
+      });
       const remove = learningEl('button','learning-mini-btn','Saqlanganlardan olib tashlash');
       remove.type='button';
       remove.addEventListener('click', async () => {
         await toggleSavedLesson(lesson.id,false);
       });
-      actions.appendChild(remove);
+      actions.append(open,remove);
       card.appendChild(actions);
       savedList.appendChild(card);
     });
