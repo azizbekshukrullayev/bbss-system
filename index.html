@@ -468,6 +468,7 @@
     : null;
 
   function showScreen(screen) {
+    if (screen !== 'chat') document.body.classList.remove('chat-fullscreen-mode');
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById(screen+'-screen').classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===screen));
@@ -476,7 +477,10 @@
       loadAdminEnrollments();
       loadAdminAccessRequests();
     }
-    if (screen === 'chat') loadCommunityMessages(false);
+    if (screen === 'chat') {
+      showChatHub();
+      loadChatDirectory(false);
+    }
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
@@ -627,14 +631,21 @@
   }
 
 
-  let communityChatLoading = false;
-  let communityChatHasRendered = false;
-  let communityChatSending = false;
+  let groupChatMessages = [];
+  let directChatMessages = [];
+  let groupChatLoading = false;
+  let directChatLoading = false;
+  let chatDirectoryLoading = false;
+  let sendingGroupMessage = false;
+  let sendingDirectMessage = false;
+  let activeDirectPeer = null;
+  let groupReplyTarget = null;
+  let directReplyTarget = null;
+  let groupHasRendered = false;
+  let directHasRendered = false;
 
   async function invokeSecureAction(action, extra = {}) {
-    if (!tg || !tg.initData) {
-      throw new Error('Ushbu bo‘limni Telegram bot ichidan oching.');
-    }
+    if (!tg || !tg.initData) throw new Error('Chatni Telegram bot ichidan oching.');
     if (!db) throw new Error('Supabase bilan aloqa yo‘q.');
     const { data, error } = await db.functions.invoke('bbss-video-url', {
       body: { action, initData: tg.initData, ...extra }
@@ -647,168 +658,419 @@
       } catch (_) {}
       throw new Error(message);
     }
-    if (!data || data.ok !== true) {
-      throw new Error((data && data.error) || 'Server tasdiq qaytarmadi.');
-    }
+    if (!data || data.ok !== true) throw new Error((data && data.error) || 'Server tasdiq qaytarmadi.');
     return data;
+  }
+
+  function chatIsViewActive(id) {
+    const el = document.getElementById(id);
+    return !!el && !el.hidden && el.classList.contains('active');
+  }
+
+  function showChatHub() {
+    document.body.classList.remove('chat-fullscreen-mode');
+    const hub = document.getElementById('chat-hub-view');
+    const group = document.getElementById('group-chat-view');
+    const direct = document.getElementById('direct-chat-view');
+    if (hub) { hub.hidden = false; hub.classList.add('active'); }
+    if (group) { group.hidden = true; group.classList.remove('active'); }
+    if (direct) { direct.hidden = true; direct.classList.remove('active'); }
+    activeDirectPeer = null;
+    groupReplyTarget = null;
+    directReplyTarget = null;
+    updateChatReplyPreview('group', null);
+    updateChatReplyPreview('direct', null);
+  }
+
+  function openGroupChat() {
+    document.body.classList.add('chat-fullscreen-mode');
+    const hub = document.getElementById('chat-hub-view');
+    const group = document.getElementById('group-chat-view');
+    const direct = document.getElementById('direct-chat-view');
+    if (hub) { hub.hidden = true; hub.classList.remove('active'); }
+    if (direct) { direct.hidden = true; direct.classList.remove('active'); }
+    if (group) { group.hidden = false; group.classList.add('active'); }
+    loadGroupChatMessages(false);
+  }
+
+  function openDirectChat(telegramId, displayName, username) {
+    activeDirectPeer = {
+      telegramId: String(telegramId),
+      displayName: String(displayName || 'Student'),
+      username: username ? String(username) : ''
+    };
+    groupReplyTarget = null;
+    directReplyTarget = null;
+    updateChatReplyPreview('direct', null);
+    document.body.classList.add('chat-fullscreen-mode');
+
+    const hub = document.getElementById('chat-hub-view');
+    const group = document.getElementById('group-chat-view');
+    const direct = document.getElementById('direct-chat-view');
+    if (hub) { hub.hidden = true; hub.classList.remove('active'); }
+    if (group) { group.hidden = true; group.classList.remove('active'); }
+    if (direct) { direct.hidden = false; direct.classList.add('active'); }
+
+    document.getElementById('direct-chat-name').textContent = activeDirectPeer.displayName;
+    document.getElementById('direct-chat-username').textContent = activeDirectPeer.username
+      ? '@' + activeDirectPeer.username.replace(/^@/, '')
+      : 'Shaxsiy suhbat';
+    directChatMessages = [];
+    directHasRendered = false;
+    renderChatMessages(directChatMessages, 'direct-chat-messages', 'direct', true);
+    loadDirectChatMessages(false);
+  }
+
+  function backToChatHub() {
+    showChatHub();
+    loadChatDirectory(false);
+  }
+
+  async function loadChatDirectory(silent = false) {
+    if (chatDirectoryLoading || !chatIsViewActive('chat-hub-view')) return;
+    chatDirectoryLoading = true;
+    const status = document.getElementById('chat-directory-status');
+    const refresh = document.getElementById('refresh-chat-directory-btn');
+    if (refresh) refresh.disabled = true;
+    if (status && !silent) status.textContent = 'Yuklanmoqda…';
+
+    try {
+      const data = await invokeSecureAction('direct_chat_directory');
+      const students = Array.isArray(data.students) ? data.students : [];
+      renderChatDirectory(students);
+      if (status) status.textContent = students.length ? students.length + ' student' : 'Hozircha student yo‘q';
+    } catch (error) {
+      if (status) status.textContent = 'Xatolik';
+      if (!silent) showToast(error && error.message ? error.message : 'Studentlar ro‘yxati yuklanmadi.');
+      console.error('Chat directory error:', error);
+    } finally {
+      chatDirectoryLoading = false;
+      if (refresh) refresh.disabled = false;
+    }
+  }
+
+  function renderChatDirectory(students) {
+    const container = document.getElementById('direct-chat-people');
+    if (!container) return;
+    container.replaceChildren();
+    if (!Array.isArray(students) || students.length === 0) {
+      addEmpty(container, 'Boshqa faol studentlar hozircha yo‘q.');
+      return;
+    }
+
+    students.forEach((student) => {
+      const id = String(student.telegramId || '');
+      const name = String(student.displayName || 'BBSS o‘quvchisi');
+      const username = student.username ? '@' + String(student.username).replace(/^@/, '') : 'BBSS student';
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'chat-person-row';
+      row.setAttribute('aria-label', 'Shaxsiy chatni ochish: ' + name);
+
+      const avatar = document.createElement('span');
+      avatar.className = 'chat-person-avatar';
+      avatar.textContent = name.trim().slice(0, 1).toUpperCase() || 'B';
+
+      const copy = document.createElement('span');
+      copy.className = 'chat-person-copy';
+      const title = document.createElement('strong');
+      title.textContent = name;
+      const handle = document.createElement('small');
+      handle.textContent = username;
+      copy.append(title, handle);
+
+      const arrow = document.createElement('span');
+      arrow.className = 'chat-entry-arrow';
+      arrow.textContent = '›';
+      row.append(avatar, copy, arrow);
+      row.addEventListener('click', () => openDirectChat(id, name, student.username || ''));
+      container.append(row);
+    });
   }
 
   function formatChatTime(value) {
     if (!value) return '';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '';
-    return date.toLocaleTimeString('uz-UZ', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function renderCommunityMessages(messages, scrollToBottom = false) {
-    const container = document.getElementById('community-chat-messages');
+  function addChatReplyPreview(container, replyTo) {
+    if (!replyTo) return;
+    const quote = document.createElement('div');
+    quote.className = 'chat-message-reply-quote';
+    const name = document.createElement('strong');
+    name.textContent = replyTo.displayName || 'Xabar';
+    const text = document.createElement('span');
+    text.textContent = replyTo.isDeleted ? 'Xabar olib tashlangan' : String(replyTo.message || '');
+    quote.append(name, text);
+    container.append(quote);
+  }
+
+  function renderChatMessages(messages, containerId, mode, forceBottom = false) {
+    const container = document.getElementById(containerId);
     if (!container) return;
+    const wasNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 70;
     container.replaceChildren();
 
     if (!Array.isArray(messages) || messages.length === 0) {
       addEmpty(container, 'Hozircha xabar yo‘q. Birinchi bo‘lib fikringizni yozing.');
-      communityChatHasRendered = true;
+      if (mode === 'group') groupHasRendered = true;
+      else directHasRendered = true;
       return;
     }
 
     messages.forEach((message) => {
       const card = document.createElement('article');
-      card.className = 'community-chat-message';
+      card.className = 'chat-message';
       if (message.isOwn) card.classList.add('is-own');
       if (message.isDeleted) card.classList.add('is-deleted');
 
       const head = document.createElement('div');
-      head.className = 'community-chat-message-head';
-
+      head.className = 'chat-message-head';
       const author = document.createElement('span');
-      author.className = 'community-chat-author';
+      author.className = 'chat-message-author';
       author.textContent = message.isOwn ? 'Siz' : (message.displayName || 'BBSS o‘quvchisi');
-
-      const meta = document.createElement('span');
-      meta.className = 'community-chat-time';
-      meta.textContent = formatChatTime(message.createdAt);
-      head.append(author, meta);
+      const time = document.createElement('span');
+      time.className = 'chat-message-time';
+      time.textContent = formatChatTime(message.createdAt);
+      head.append(author, time);
       card.append(head);
 
+      if (message.replyTo) addChatReplyPreview(card, message.replyTo);
+
       const body = document.createElement('div');
-      body.className = 'community-chat-text';
-      body.textContent = message.isDeleted
-        ? 'Xabar admin tomonidan olib tashlandi.'
-        : String(message.message || '');
+      body.className = 'chat-message-text';
+      body.textContent = String(message.message || '');
       card.append(body);
 
-      if (message.canDelete && !message.isDeleted) {
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'community-chat-delete';
-        deleteButton.type = 'button';
-        deleteButton.textContent = 'Xabarni olib tashlash';
-        deleteButton.addEventListener('click', () => {
-          confirmDeleteCommunityMessage(String(message.id || ''), deleteButton);
-        });
-        card.append(deleteButton);
+      if (!message.isDeleted) {
+        const actions = document.createElement('div');
+        actions.className = 'chat-message-actions';
+        const reply = document.createElement('button');
+        reply.type = 'button';
+        reply.className = 'chat-reply-btn';
+        reply.textContent = '↩';
+        reply.title = 'Shu xabarga javob yozish';
+        reply.setAttribute('aria-label', 'Shu xabarga javob yozish');
+        reply.addEventListener('click', () => setChatReplyTarget(mode, message));
+        actions.append(reply);
+
+        if (message.canDelete) {
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'chat-delete-btn';
+          del.textContent = '×';
+          del.title = 'Xabarni olib tashlash';
+          del.setAttribute('aria-label', 'Xabarni olib tashlash');
+          del.addEventListener('click', () => confirmDeleteChatMessage(mode, String(message.id || ''), del));
+          actions.append(del);
+        }
+        card.append(actions);
       }
       container.append(card);
     });
 
-    communityChatHasRendered = true;
-    if (scrollToBottom) container.scrollTop = container.scrollHeight;
+    if (mode === 'group') groupHasRendered = true;
+    else directHasRendered = true;
+    requestAnimationFrame(() => {
+      if (forceBottom || wasNearBottom) container.scrollTop = container.scrollHeight;
+    });
   }
 
-  async function loadCommunityMessages(silent = false) {
-    const screen = document.getElementById('chat-screen');
-    const container = document.getElementById('community-chat-messages');
-    const status = document.getElementById('community-chat-status');
-    if (!screen || !screen.classList.contains('active')) return;
-    if (communityChatLoading) return;
-    communityChatLoading = true;
+  function setChatReplyTarget(mode, message) {
+    const target = {
+      id: String(message.id || ''),
+      displayName: message.isOwn ? 'Siz' : String(message.displayName || 'Student'),
+      message: String(message.message || '').slice(0, 200)
+    };
+    if (mode === 'group') groupReplyTarget = target;
+    else directReplyTarget = target;
+    updateChatReplyPreview(mode, target);
+    const input = document.getElementById(mode === 'group' ? 'group-chat-input' : 'direct-chat-input');
+    if (input) input.focus();
+  }
 
-    const shouldScroll = !communityChatHasRendered || (
-      container && container.scrollHeight - container.scrollTop - container.clientHeight < 90
-    );
-    if (status && !silent) status.textContent = 'Xabarlar yuklanmoqda…';
+  function updateChatReplyPreview(mode, target) {
+    const prefix = mode === 'group' ? 'group-chat' : 'direct-chat';
+    const panel = document.getElementById(prefix + '-reply-preview');
+    const name = document.getElementById(prefix + '-reply-name');
+    const text = document.getElementById(prefix + '-reply-text');
+    if (!panel) return;
+    panel.hidden = !target;
+    if (target) {
+      if (name) name.textContent = target.displayName;
+      if (text) text.textContent = target.message;
+    }
+  }
 
+  function clearChatReplyTarget(mode) {
+    if (mode === 'group') groupReplyTarget = null;
+    else directReplyTarget = null;
+    updateChatReplyPreview(mode, null);
+  }
+
+  async function loadGroupChatMessages(silent = false) {
+    if (groupChatLoading || !chatIsViewActive('group-chat-view')) return;
+    groupChatLoading = true;
+    const status = document.getElementById('group-chat-status');
+    if (status && !silent) status.textContent = 'Yuklanmoqda…';
     try {
       const data = await invokeSecureAction('community_chat_list');
-      const messages = Array.isArray(data.messages) ? data.messages : [];
-      renderCommunityMessages(messages, shouldScroll);
-      if (status) status.textContent = messages.length
-        ? `${messages.length} ta oxirgi xabar`
-        : 'Yangi muhokama';
+      groupChatMessages = Array.isArray(data.messages) ? data.messages : [];
+      renderChatMessages(groupChatMessages, 'group-chat-messages', 'group', !groupHasRendered);
+      if (status) status.textContent = 'Group Chat';
     } catch (error) {
-      const message = error && error.message ? error.message : 'Chatni yuklab bo‘lmadi.';
-      if (status) status.textContent = 'Ulanishda xatolik';
-      if (container && !communityChatHasRendered) addEmpty(container, message);
-      if (!silent) showToast(message);
-      console.error('Community chat load error:', error);
+      if (status) status.textContent = 'Xatolik';
+      if (!silent) showToast(error && error.message ? error.message : 'Guruh chatini yuklab bo‘lmadi.');
+      console.error('Group chat load error:', error);
     } finally {
-      communityChatLoading = false;
+      groupChatLoading = false;
     }
   }
 
-  async function sendCommunityMessage(event) {
-    if (event) event.preventDefault();
-    if (communityChatSending) return;
-
-    const input = document.getElementById('community-chat-input');
-    const button = document.getElementById('community-chat-send');
-    const status = document.getElementById('community-chat-status');
-    const message = input ? input.value.trim() : '';
-    if (!message) {
-      if (input) input.focus();
-      return;
-    }
-    if (message.length > 1200) {
-      showToast('Xabar 1200 belgidan oshmasin.');
-      return;
-    }
-
-    communityChatSending = true;
-    if (button) {
-      button.disabled = true;
-      button.textContent = 'Yuborilmoqda…';
-    }
+  async function loadDirectChatMessages(silent = false) {
+    if (directChatLoading || !activeDirectPeer || !chatIsViewActive('direct-chat-view')) return;
+    directChatLoading = true;
+    const status = document.getElementById('direct-chat-status');
+    if (status && !silent) status.textContent = 'Yuklanmoqda…';
     try {
-      await invokeSecureAction('community_chat_send', { message });
-      input.value = '';
-      if (status) status.textContent = 'Xabar yuborildi';
-      await loadCommunityMessages(false);
+      const data = await invokeSecureAction('direct_chat_list', { peerTelegramId: activeDirectPeer.telegramId });
+      directChatMessages = Array.isArray(data.messages) ? data.messages : [];
+      renderChatMessages(directChatMessages, 'direct-chat-messages', 'direct', !directHasRendered);
+      if (status) status.textContent = 'Shaxsiy chat';
     } catch (error) {
-      const messageText = error && error.message ? error.message : 'Xabar yuborilmadi.';
-      if (status) status.textContent = 'Yuborilmadi';
-      showToast(messageText);
-      console.error('Community chat send error:', error);
+      if (status) status.textContent = 'Xatolik';
+      if (!silent) showToast(error && error.message ? error.message : 'Shaxsiy chatni yuklab bo‘lmadi.');
+      console.error('Direct chat load error:', error);
     } finally {
-      communityChatSending = false;
-      if (button) {
-        button.disabled = false;
-        button.textContent = 'Yuborish';
-      }
+      directChatLoading = false;
     }
   }
 
-  function confirmDeleteCommunityMessage(messageId, button) {
-    const proceed = (confirmed) => {
-      if (confirmed) deleteCommunityMessage(messageId, button);
+  async function submitChatMessage(mode, event) {
+    if (event) event.preventDefault();
+    const isGroup = mode === 'group';
+    if ((isGroup && sendingGroupMessage) || (!isGroup && sendingDirectMessage)) return;
+    if (!isGroup && !activeDirectPeer) return;
+
+    const prefix = isGroup ? 'group-chat' : 'direct-chat';
+    const input = document.getElementById(prefix + '-input');
+    const button = document.getElementById(prefix + '-send');
+    const status = document.getElementById(isGroup ? 'group-chat-status' : 'direct-chat-status');
+    const messageText = input ? input.value.trim() : '';
+    if (!messageText) { if (input) input.focus(); return; }
+    if (messageText.length > 1200) { showToast('Xabar 1200 belgidan oshmasin.'); return; }
+
+    const replyTarget = isGroup ? groupReplyTarget : directReplyTarget;
+    const temporaryId = 'tmp-' + Date.now() + '-' + Math.random().toString(36).slice(2,7);
+    const optimistic = {
+      id: temporaryId,
+      message: messageText,
+      displayName: 'Siz',
+      isOwn: true,
+      isDeleted: false,
+      canDelete: false,
+      createdAt: new Date().toISOString(),
+      replyTo: replyTarget ? { ...replyTarget, isDeleted: false } : null
     };
-    const confirmText = 'Bu xabar chatdan olib tashlansinmi?';
-    if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(confirmText, proceed);
-    else proceed(window.confirm(confirmText));
+
+    if (isGroup) {
+      sendingGroupMessage = true;
+      groupChatMessages = [...groupChatMessages, optimistic].slice(-80);
+      renderChatMessages(groupChatMessages, 'group-chat-messages', 'group', true);
+    } else {
+      sendingDirectMessage = true;
+      directChatMessages = [...directChatMessages, optimistic].slice(-80);
+      renderChatMessages(directChatMessages, 'direct-chat-messages', 'direct', true);
+    }
+    if (input) { input.value = ''; input.style.height = 'auto'; }
+    if (button) button.disabled = true;
+    if (status) status.textContent = 'Yuborilmoqda…';
+
+    try {
+      const action = isGroup ? 'community_chat_send' : 'direct_chat_send';
+      const extra = {
+        message: messageText,
+        replyToId: replyTarget ? replyTarget.id : ''
+      };
+      if (!isGroup) extra.peerTelegramId = activeDirectPeer.telegramId;
+      const result = await invokeSecureAction(action, extra);
+
+      const collection = isGroup ? groupChatMessages : directChatMessages;
+      const updated = collection.map((m) => m.id === temporaryId
+        ? { ...m, id: result.messageId, createdAt: result.createdAt, canDelete: true }
+        : m);
+      if (isGroup) {
+        groupChatMessages = updated;
+        renderChatMessages(groupChatMessages, 'group-chat-messages', 'group', true);
+        clearChatReplyTarget('group');
+      } else {
+        directChatMessages = updated;
+        renderChatMessages(directChatMessages, 'direct-chat-messages', 'direct', true);
+        clearChatReplyTarget('direct');
+      }
+      if (status) status.textContent = 'Yuborildi';
+      if (input) input.focus();
+    } catch (error) {
+      if (isGroup) {
+        groupChatMessages = groupChatMessages.filter((m) => m.id !== temporaryId);
+        renderChatMessages(groupChatMessages, 'group-chat-messages', 'group', true);
+      } else {
+        directChatMessages = directChatMessages.filter((m) => m.id !== temporaryId);
+        renderChatMessages(directChatMessages, 'direct-chat-messages', 'direct', true);
+      }
+      if (status) status.textContent = 'Yuborilmadi';
+      showToast(error && error.message ? error.message : 'Xabar yuborilmadi.');
+      console.error('Chat send error:', error);
+    } finally {
+      if (isGroup) sendingGroupMessage = false;
+      else sendingDirectMessage = false;
+      if (button) button.disabled = false;
+    }
   }
 
-  async function deleteCommunityMessage(messageId, button) {
+  function confirmDeleteChatMessage(mode, messageId, button) {
+    const proceed = (confirmed) => { if (confirmed) deleteChatMessage(mode, messageId, button); };
+    const text = 'Bu xabar chatdan olib tashlansinmi?';
+    if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(text, proceed);
+    else proceed(window.confirm(text));
+  }
+
+  async function deleteChatMessage(mode, messageId, button) {
     if (button) button.disabled = true;
     try {
-      await invokeSecureAction('community_chat_delete', { messageId });
-      showToast('Xabar chatdan olib tashlandi.');
-      await loadCommunityMessages(true);
+      await invokeSecureAction(mode === 'group' ? 'community_chat_delete' : 'direct_chat_delete', { messageId });
+      showToast('Xabar olib tashlandi.');
+      if (mode === 'group') await loadGroupChatMessages(true);
+      else await loadDirectChatMessages(true);
     } catch (error) {
       showToast(error && error.message ? error.message : 'Xabarni olib tashlab bo‘lmadi.');
       if (button) button.disabled = false;
-      console.error('Community chat delete error:', error);
+      console.error('Chat delete error:', error);
     }
+  }
+
+  function bindChatComposer(mode) {
+    const prefix = mode === 'group' ? 'group-chat' : 'direct-chat';
+    const form = document.getElementById(prefix + '-form');
+    const input = document.getElementById(prefix + '-input');
+    if (form) form.addEventListener('submit', (event) => submitChatMessage(mode, event));
+    if (input) {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+          event.preventDefault();
+          if (typeof form?.requestSubmit === 'function') form.requestSubmit();
+          else submitChatMessage(mode, null);
+        }
+      });
+      input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 108) + 'px';
+      });
+    }
+    const cancel = document.getElementById(prefix + '-reply-cancel');
+    if (cancel) cancel.addEventListener('click', () => clearChatReplyTarget(mode));
   }
 
   async function invokeAdminAction(action, extra = {}) {
@@ -1489,18 +1751,16 @@
   if (requestAccessButton) requestAccessButton.addEventListener('click', requestCourseAccess);
   const refreshAccessRequestsButton = document.getElementById('refresh-access-requests-btn');
   if (refreshAccessRequestsButton) refreshAccessRequestsButton.addEventListener('click', () => loadAdminAccessRequests());
-  const communityChatForm = document.getElementById('community-chat-form');
-  if (communityChatForm) communityChatForm.addEventListener('submit', sendCommunityMessage);
-  const communityChatInput = document.getElementById('community-chat-input');
-  if (communityChatInput) {
-    communityChatInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-        event.preventDefault();
-        if (typeof communityChatForm?.requestSubmit === 'function') communityChatForm.requestSubmit();
-        else sendCommunityMessage();
-      }
-    });
-  }
+  const openGroupChatButton = document.getElementById('open-group-chat-btn');
+  if (openGroupChatButton) openGroupChatButton.addEventListener('click', openGroupChat);
+  const groupChatBack = document.getElementById('group-chat-back');
+  if (groupChatBack) groupChatBack.addEventListener('click', backToChatHub);
+  const directChatBack = document.getElementById('direct-chat-back');
+  if (directChatBack) directChatBack.addEventListener('click', backToChatHub);
+  const refreshChatDirectory = document.getElementById('refresh-chat-directory-btn');
+  if (refreshChatDirectory) refreshChatDirectory.addEventListener('click', () => loadChatDirectory(false));
+  bindChatComposer('group');
+  bindChatComposer('direct');
 
   loadCourseCatalog();
 
@@ -1512,11 +1772,10 @@
   }, 15000);
 
   setInterval(() => {
-    const chatScreen = document.getElementById('chat-screen');
-    if (chatScreen && chatScreen.classList.contains('active')) {
-      loadCommunityMessages(true);
-    }
-  }, 7000);
+    if (chatIsViewActive('chat-hub-view')) loadChatDirectory(true);
+    else if (chatIsViewActive('group-chat-view')) loadGroupChatMessages(true);
+    else if (chatIsViewActive('direct-chat-view')) loadDirectChatMessages(true);
+  }, 4500);
 </script>
 </body>
 </html>
