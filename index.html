@@ -50,6 +50,12 @@
     .admin-enrollment-actions{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:6px 0 0 37px;padding-top:6px;border-top:1px solid #29292b}
     .admin-enrollment-actions[hidden]{display:none!important}
     .admin-enrollment-date{font-size:10px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+    .admin-access-request-actions{display:flex;gap:7px;margin-top:9px}
+    .admin-access-request-actions .primary,.admin-access-request-actions .secondary{width:auto;flex:1;margin:0;padding:8px 9px;font-size:11px}
+    .admin-access-request-actions .secondary{border-color:#743b3b;color:#ffb4b4;background:#211314}
+    .access-request-panel[hidden]{display:none!important}
+    #admin-access-requests-panel.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
+    #admin-access-requests-panel[hidden]{display:none!important}
     .admin-revoke-btn{width:auto;max-width:100%;flex:0 0 auto;margin:0;border:1px solid #7c3434;background:#281516;color:#ffb4b4;border-radius:7px;padding:6px 8px;font-size:10px;line-height:1.2;font-weight:750}
     .admin-revoke-btn:disabled{opacity:.5;cursor:wait}
     @media(max-width:380px){.admin-enrollment-item{padding:5px 6px}.admin-enrollment-identity{gap:6px}.admin-enrollment-userline{gap:5px}.admin-enrollment-name{font-size:11px}.admin-enrollment-id{font-size:9px;max-width:86px}.admin-enrollment-avatar{width:28px;height:28px;flex-basis:28px}.admin-enrollment-actions{margin-left:34px}.admin-enrollment-date{font-size:9px}}
@@ -93,7 +99,11 @@
     <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
     <section class="course-card">
       <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4 id="course-title">BBSS Trading Course</h4><p id="course-description">Supabase’dan ma’lumot olinmoqda…</p></div><span class="pill" id="module-count">— modul</span></div>
-      <button class="primary" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
+      <button class="primary" id="open-course-btn" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
+      <div class="access-request-panel" id="access-request-panel" hidden aria-live="polite">
+        <button class="primary" id="request-access-btn" type="button">Ruxsat so‘rash</button>
+        <div class="note" id="access-request-note">Darslarni ochish uchun adminga ruxsat so‘rovi yuboring.</div>
+      </div>
     </section>
     <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">Supabase</span></div>
     <section class="course-card" id="home-module-list"><div class="empty">Modullar yuklanmoqda…</div></section>
@@ -132,6 +142,14 @@
       <button class="secondary" id="refresh-enrollments-btn" type="button">Ro‘yxatni yangilash</button>
       <div class="note" id="admin-enrollments-note" aria-live="polite">Ro‘yxat yuklanmoqda…</div>
       <div class="admin-enrollment-list" id="admin-enrollments-list"><div class="empty">Ro‘yxat yuklanmoqda…</div></div>
+    </section>
+    <section class="course-card admin-tools" id="admin-access-requests-panel" hidden aria-hidden="true" aria-live="polite">
+      <div class="course-label">ADMIN BOSHQARUVI</div>
+      <h4>Kursga kirish so‘rovlari</h4>
+      <p>Yangi o‘quvchilarning ruxsat so‘rovlarini shu yerda ko‘rib chiqing.</p>
+      <button class="secondary" id="refresh-access-requests-btn" type="button">So‘rovlarni yangilash</button>
+      <div class="note" id="admin-access-requests-note" aria-live="polite">So‘rovlar yuklanmoqda…</div>
+      <div class="admin-enrollment-list" id="admin-access-requests-list"><div class="empty">So‘rovlar yuklanmoqda…</div></div>
     </section>
     <div class="note">Telegram ichida ochilganda profil ma’lumotlari ko‘rsatilishi mumkin. Haqiqiy kirish huquqi serverda tekshirilishi shart.</div>
     <a class="secondary" href="https://t.me/Umidovich_17" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none">Admin bilan bog‘lanish</a>
@@ -304,7 +322,10 @@
     document.getElementById(screen+'-screen').classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===screen));
     window.scrollTo({top:0, behavior:'smooth'});
-    if (screen === 'profile' && isAdminPreview) loadAdminEnrollments();
+    if (screen === 'profile' && isAdminPreview) {
+      loadAdminEnrollments();
+      loadAdminAccessRequests();
+    }
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
@@ -321,6 +342,9 @@
   let loadedModules = [];
   let isAdminPreview = false;
   let accessRequired = false;
+  let accessRequestStatus = null;
+  let catalogLoadBusy = false;
+  let adminAccessRequestsLoading = false;
 
   function renderModules(modules) {
     const homeList = document.getElementById('home-module-list');
@@ -384,7 +408,7 @@
 
   function updateAdminTools() {
     const shouldShow = isAdminPreview === true;
-    ['admin-tools', 'admin-enrollments-panel'].forEach((id) => {
+    ['admin-tools', 'admin-enrollments-panel', 'admin-access-requests-panel'].forEach((id) => {
       const panel = document.getElementById(id);
       if (!panel) {
         console.error(`BBSS admin panel element #${id} topilmadi. index.html yangilanganini tekshiring.`);
@@ -588,6 +612,145 @@
     }
   }
 
+  function renderAdminAccessRequests(requests) {
+    const container = document.getElementById('admin-access-requests-list');
+    if (!container) return;
+    container.replaceChildren();
+
+    if (!Array.isArray(requests) || requests.length === 0) {
+      addEmpty(container, 'Hozircha yangi ruxsat so‘rovlari yo‘q.');
+      return;
+    }
+
+    requests.forEach((request) => {
+      const requestId = String(request.id || '');
+      const telegramId = String(request.telegramId || '');
+      const displayName = String(request.displayName || 'BBSS o‘quvchisi');
+      const username = request.username
+        ? '@' + String(request.username).replace(/^@/, '')
+        : 'Username yo‘q';
+
+      const card = document.createElement('article');
+      card.className = 'admin-enrollment-item';
+
+      const head = document.createElement('div');
+      head.className = 'admin-enrollment-head';
+      const identity = document.createElement('div');
+      identity.className = 'admin-enrollment-identity';
+      const avatar = document.createElement('div');
+      avatar.className = 'admin-enrollment-avatar';
+      setAvatarPhoto(avatar, null, displayName.trim().slice(0, 1).toUpperCase() || 'B');
+
+      const userline = document.createElement('div');
+      userline.className = 'admin-enrollment-userline';
+      const name = document.createElement('div');
+      name.className = 'admin-enrollment-name';
+      name.textContent = displayName;
+      name.title = displayName;
+      const id = document.createElement('div');
+      id.className = 'admin-enrollment-id';
+      id.textContent = telegramId ? 'ID: ' + telegramId : username;
+      id.title = telegramId ? 'Telegram ID: ' + telegramId : username;
+      userline.append(name, id);
+      identity.append(avatar, userline);
+      head.append(identity);
+      card.append(head);
+
+      const meta = document.createElement('div');
+      meta.className = 'admin-enrollment-date';
+      meta.style.marginTop = '6px';
+      meta.textContent = `${username} · So‘rov: ${formatAccessDate(request.createdAt)}`;
+      card.append(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'admin-access-request-actions';
+      const approve = document.createElement('button');
+      approve.className = 'primary';
+      approve.type = 'button';
+      approve.textContent = 'Tasdiqlash';
+      const reject = document.createElement('button');
+      reject.className = 'secondary';
+      reject.type = 'button';
+      reject.textContent = 'Rad etish';
+
+      approve.addEventListener('click', () => {
+        submitAccessRequestReview(requestId, 'approved', displayName, approve, reject);
+      });
+      reject.addEventListener('click', () => {
+        const message = `${displayName} (ID: ${telegramId}) ruxsat so‘rovi rad etilsinmi?`;
+        if (tg && typeof tg.showConfirm === 'function') {
+          tg.showConfirm(message, (confirmed) => {
+            if (confirmed) submitAccessRequestReview(requestId, 'rejected', displayName, reject, approve);
+          });
+        } else if (window.confirm(message)) {
+          submitAccessRequestReview(requestId, 'rejected', displayName, reject, approve);
+        }
+      });
+
+      actions.append(approve, reject);
+      card.append(actions);
+      container.append(card);
+    });
+  }
+
+  async function loadAdminAccessRequests(silent = false) {
+    if (!isAdminPreview || adminAccessRequestsLoading) return;
+    const note = document.getElementById('admin-access-requests-note');
+    const refresh = document.getElementById('refresh-access-requests-btn');
+    adminAccessRequestsLoading = true;
+    if (refresh) refresh.disabled = true;
+    if (note && !silent) note.textContent = 'Yangi so‘rovlar yuklanmoqda…';
+
+    try {
+      const data = await invokeAdminAction('admin_list_access_requests');
+      const requests = Array.isArray(data.requests) ? data.requests : [];
+      renderAdminAccessRequests(requests);
+      if (note) note.textContent = `Tasdiq kutayotgan so‘rovlar: ${requests.length} ta.`;
+    } catch (error) {
+      const message = error && error.message ? error.message : 'So‘rovlarni yuklab bo‘lmadi.';
+      if (note) note.textContent = message;
+      if (!silent) showToast(message);
+      console.error('Admin access request list error:', error);
+    } finally {
+      adminAccessRequestsLoading = false;
+      if (refresh) refresh.disabled = false;
+    }
+  }
+
+  async function submitAccessRequestReview(requestId, decision, displayName, button, otherButton) {
+    if (!requestId) {
+      showToast('So‘rov identifikatori topilmadi.');
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      button.textContent = decision === 'approved' ? 'Tasdiqlanmoqda…' : 'Rad etilmoqda…';
+    }
+    if (otherButton) otherButton.disabled = true;
+
+    try {
+      await invokeAdminAction('admin_review_access_request', { requestId, decision });
+      showToast(decision === 'approved'
+        ? `${displayName} uchun darslar ochildi.`
+        : `${displayName} so‘rovi rad etildi.`);
+      await Promise.all([
+        loadAdminAccessRequests(true),
+        decision === 'approved' ? loadAdminEnrollments(true) : Promise.resolve(),
+      ]);
+    } catch (error) {
+      const message = error && error.message ? error.message : 'So‘rovni ko‘rib chiqib bo‘lmadi.';
+      const note = document.getElementById('admin-access-requests-note');
+      if (note) note.textContent = message;
+      showToast(message);
+      console.error('Admin access request review error:', error);
+      if (button) {
+        button.disabled = false;
+        button.textContent = decision === 'approved' ? 'Tasdiqlash' : 'Rad etish';
+      }
+      if (otherButton) otherButton.disabled = false;
+    }
+  }
+
   function confirmRevokeAccess(targetTelegramId, displayName, button) {
     const message = `${displayName} (ID: ${targetTelegramId}) uchun kursga kirish huquqi bekor qilinsinmi?`;
     const proceed = (confirmed) => { if (confirmed) revokeCourseAccess(targetTelegramId, button); };
@@ -612,9 +775,82 @@
     }
   }
 
+  function updateAccessRequestUI(status) {
+    accessRequestStatus = status || null;
+    const panel = document.getElementById('access-request-panel');
+    const button = document.getElementById('request-access-btn');
+    const note = document.getElementById('access-request-note');
+    if (!panel || !button || !note) return;
+
+    panel.hidden = !accessRequired;
+    if (!accessRequired) return;
+
+    if (status === 'pending') {
+      button.disabled = true;
+      button.textContent = 'So‘rov yuborilgan';
+      note.textContent = 'So‘rovingiz adminga yetkazildi. Tasdiqlanishini kuting — darslar avtomatik ochiladi.';
+    } else if (status === 'rejected') {
+      button.disabled = false;
+      button.textContent = 'Qayta ruxsat so‘rash';
+      note.textContent = 'Avvalgi so‘rov rad etilgan. Zarur bo‘lsa, yangi so‘rov yuboring.';
+    } else {
+      button.disabled = false;
+      button.textContent = 'Ruxsat so‘rash';
+      note.textContent = 'Tugmani bosing — admin ilova ichida sizning Telegram profilingiz bilan so‘rovni ko‘radi.';
+    }
+  }
+
+  async function requestCourseAccess() {
+    const button = document.getElementById('request-access-btn');
+    const note = document.getElementById('access-request-note');
+    if (!tg || !tg.initData) {
+      showToast('Ruxsat so‘rash uchun BBSS SYSTEM botini ichidan oching.');
+      return;
+    }
+    if (!db) {
+      showToast('Supabase bilan aloqa yo‘q.');
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'So‘rov yuborilmoqda…';
+    if (note) note.textContent = 'Telegram profilingiz tekshirilib, so‘rov adminga yuborilmoqda…';
+    try {
+      const { data, error } = await db.functions.invoke('bbss-video-url', {
+        body: { action: 'request_access', initData: tg.initData }
+      });
+      if (error) {
+        let message = 'Ruxsat so‘rovini yuborib bo‘lmadi.';
+        try {
+          const responseBody = error.context && await error.context.json();
+          if (responseBody && responseBody.error) message = responseBody.error;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      if (!data || data.ok !== true) {
+        throw new Error((data && data.error) || 'Server so‘rovni tasdiqlamadi.');
+      }
+      accessRequestStatus = data.status || 'pending';
+      updateAccessRequestUI(accessRequestStatus);
+      showToast(data.alreadyEnrolled
+        ? 'Sizda kursga kirish huquqi bor.'
+        : 'Ruxsat so‘rovi adminga yuborildi.');
+      await loadCourseCatalog();
+    } catch (error) {
+      const message = error && error.message ? error.message : 'Ruxsat so‘rovini yuborib bo‘lmadi.';
+      if (note) note.textContent = message;
+      showToast(message);
+      console.error('Student access request error:', error);
+      updateAccessRequestUI(accessRequestStatus);
+    }
+  }
+
   function applyCatalog(catalog) {
     isAdminPreview = catalog.admin === true;
     accessRequired = catalog.accessRequired === true;
+    accessRequestStatus = typeof catalog.accessRequestStatus === 'string'
+      ? catalog.accessRequestStatus
+      : null;
     if (typeof catalog.profilePhotoUrl === 'string' && catalog.profilePhotoUrl) {
       const initialSource = document.getElementById('profile-name')?.textContent || 'B';
       const initial = String(initialSource).trim().slice(0, 1).toUpperCase() || 'B';
@@ -634,21 +870,36 @@
     if (!course) {
       const activeModuleCount = document.getElementById('active-module-count');
       if (activeModuleCount) activeModuleCount.textContent = '0 / 3';
+      const requestPanel = document.getElementById('access-request-panel');
+      const openCourseButton = document.getElementById('open-course-btn');
       if (accessRequired) {
         document.getElementById('course-title').textContent = 'Kirish huquqi kutilmoqda';
-        document.getElementById('course-description').textContent = 'Admin Telegram Akkaunt ID raqamingizga ruxsat bergach, darslar shu yerda ochiladi.';
-        document.getElementById('connection-note').textContent = 'Profil bo‘limidagi Akkaunt ID ni adminga yuboring. Telefon raqami yoki username kerak emas.';
-        document.getElementById('lesson-note').textContent = 'Kurs darslari admin ruxsatidan keyin ochiladi.';
-        document.getElementById('course-status').textContent = 'Ruxsat kutilmoqda';
+        document.getElementById('course-description').textContent = 'Darslarni ochish uchun adminga ruxsat so‘rovi yuboring.';
+        document.getElementById('connection-note').textContent = 'Profilingizdan ruxsat so‘rovi yuborishingiz mumkin. Admin tasdiqlagach darslar ochiladi.';
+        document.getElementById('lesson-note').textContent = 'Kurs darslari admin tasdig‘idan keyin avtomatik ochiladi.';
+        document.getElementById('course-status').textContent = accessRequestStatus === 'rejected'
+          ? 'So‘rov rad etilgan'
+          : accessRequestStatus === 'pending'
+            ? 'So‘rov yuborilgan'
+            : 'Ruxsat kutilmoqda';
+        if (requestPanel) requestPanel.hidden = false;
+        if (openCourseButton) openCourseButton.hidden = true;
+        updateAccessRequestUI(accessRequestStatus);
       } else {
         document.getElementById('course-title').textContent = 'Kurs ma’lumoti topilmadi';
         document.getElementById('course-description').textContent = 'Kurs sozlamalarini admin tekshirishi kerak.';
         document.getElementById('connection-note').textContent = 'Supabase bilan aloqa ishlayapti, lekin kurs topilmadi.';
         document.getElementById('lesson-note').textContent = 'Kurs ma’lumoti topilmadi.';
+        if (requestPanel) requestPanel.hidden = true;
+        if (openCourseButton) openCourseButton.hidden = false;
       }
       renderModules([]);
       return;
     }
+    const requestPanel = document.getElementById('access-request-panel');
+    const openCourseButton = document.getElementById('open-course-btn');
+    if (requestPanel) requestPanel.hidden = true;
+    if (openCourseButton) openCourseButton.hidden = false;
     document.getElementById('course-title').textContent = course.title || 'BBSS Trading Course';
     document.getElementById('course-description').textContent = course.description || 'BBSS SYSTEM trading kursi';
     document.getElementById('course-status').textContent = isAdminPreview ? 'Admin' : 'Faol';
@@ -676,6 +927,8 @@
   }
 
   async function loadCourseCatalog() {
+    if (catalogLoadBusy) return;
+    catalogLoadBusy = true;
     const status = document.getElementById('db-status');
     const note = document.getElementById('connection-note');
     try {
@@ -728,6 +981,8 @@
       const activeModuleCount = document.getElementById('active-module-count');
       if (activeModuleCount) activeModuleCount.textContent = '0 / 3';
       document.getElementById('course-status').textContent = 'Tekshirish kerak';
+    } finally {
+      catalogLoadBusy = false;
     }
   }
 
@@ -884,8 +1139,19 @@
   if (configureBotWebhookButton) configureBotWebhookButton.addEventListener('click', configureBotWebhook);
   const refreshEnrollmentsButton = document.getElementById('refresh-enrollments-btn');
   if (refreshEnrollmentsButton) refreshEnrollmentsButton.addEventListener('click', () => loadAdminEnrollments());
+  const requestAccessButton = document.getElementById('request-access-btn');
+  if (requestAccessButton) requestAccessButton.addEventListener('click', requestCourseAccess);
+  const refreshAccessRequestsButton = document.getElementById('refresh-access-requests-btn');
+  if (refreshAccessRequestsButton) refreshAccessRequestsButton.addEventListener('click', () => loadAdminAccessRequests());
 
   loadCourseCatalog();
+
+  // Admin ilova ochiq turganda yangi so‘rovlar ko‘rinadi; studentga tasdiq berilgach katalog avtomatik ochiladi.
+  setInterval(() => {
+    if (!tg || !tg.initData) return;
+    if (isAdminPreview) loadAdminAccessRequests(true);
+    else if (accessRequired) loadCourseCatalog();
+  }, 15000);
 </script>
 </body>
 </html>
