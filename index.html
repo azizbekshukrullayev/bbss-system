@@ -62,6 +62,8 @@
     .chat-person-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left}
     .chat-person-copy strong{font-size:12px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .chat-person-copy small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .chat-person-unread{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;flex:0 0 auto;padding:0 6px;border-radius:999px;background:var(--gold);color:#17130a;font-size:10px;font-weight:900;line-height:1}
+    .chat-person-unread[hidden]{display:none!important}
     .chat-person-open{border:1px solid #39393c;border-radius:8px;background:#19191b;color:var(--gold2);font-size:10px;font-weight:700;padding:6px 8px;flex:0 0 auto}
     .chat-subview[hidden],.chat-reply-preview[hidden]{display:none!important}
     .chat-conversation-header{display:flex;align-items:center;gap:9px;flex:0 0 auto;min-height:46px;padding:4px 1px 9px;border-bottom:1px solid var(--line)}
@@ -782,10 +784,19 @@
       handle.textContent = username;
       copy.append(title, handle);
 
+      const unreadCount = Math.max(0, Number(student.unreadCount) || 0);
+      const unreadBadge = document.createElement('span');
+      unreadBadge.className = 'chat-person-unread';
+      unreadBadge.hidden = unreadCount === 0;
+      unreadBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+      if (unreadCount > 0) {
+        row.setAttribute('aria-label', 'Shaxsiy chatni ochish: ' + name + '. ' + unreadCount + ' ta o‘qilmagan xabar');
+      }
+
       const arrow = document.createElement('span');
       arrow.className = 'chat-entry-arrow';
       arrow.textContent = '›';
-      row.append(avatar, copy, arrow);
+      row.append(avatar, copy, unreadBadge, arrow);
       row.addEventListener('click', () => openDirectChat(id, name, student.username || ''));
       container.append(row);
     });
