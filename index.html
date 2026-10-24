@@ -165,7 +165,33 @@
     .video-frame{display:block;width:100%;aspect-ratio:16/9;height:auto;min-height:0;margin:0 auto;border:0;border-radius:12px;background:#000;overflow:hidden}
     .video-hint{font-size:11px;line-height:1.4;color:var(--muted);text-align:center;margin:11px auto 0;max-width:440px}
     @media (max-width:420px){.video-shell{padding:10px;border-radius:15px;margin:14px auto 18px}.video-title{font-size:14px}.video-frame{border-radius:9px}}
-  </style>
+  
+    .settings-card{padding:16px;margin-bottom:12px}
+    .settings-card h4{margin:7px 0 13px;font-size:15px}
+    .settings-card>p{font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 14px}
+    .settings-row{display:flex;align-items:center;gap:14px;justify-content:space-between;min-width:0;padding:5px 0}
+    .settings-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+    .settings-copy strong{font-size:13px;line-height:1.35}
+    .settings-copy span{font-size:11px;line-height:1.45;color:var(--muted)}
+    .settings-divider{height:1px;background:var(--line);margin:13px 0}
+    .settings-toggle{appearance:none;-webkit-appearance:none;position:relative;width:44px;height:26px;flex:0 0 44px;margin:0;border:1px solid #4a4a4d;border-radius:999px;background:#29292c;cursor:pointer;transition:background .18s ease,border-color .18s ease}
+    .settings-toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#d7d7d7;transition:transform .18s ease,background .18s ease}
+    .settings-toggle:checked{background:var(--gold);border-color:var(--gold)}
+    .settings-toggle:checked::after{transform:translateX(18px);background:#18140a}
+    .settings-toggle:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+    .settings-account{display:flex;align-items:center;gap:12px;padding:8px 0 16px}
+    .settings-account-avatar{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;overflow:hidden;border:1px solid #5b4a23;border-radius:50%;background:#211d13;color:var(--gold2);font-size:18px;font-weight:800}
+    .settings-account-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+    .settings-account-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+    .settings-account-copy strong{font-size:13px;overflow-wrap:anywhere}
+    .settings-account-copy span,.settings-account-copy small{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+    .settings-action{width:100%;margin:0}
+    .settings-save-note{font-size:10px;color:var(--muted);line-height:1.45;margin-top:10px}
+    .nav-inner{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+    body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+    @media(max-width:360px){.nav-btn{font-size:9px;padding-left:1px;padding-right:1px}.nav-btn b{font-size:16px}.settings-card{padding:13px}.settings-copy strong{font-size:12px}}
+
+</style>
 </head>
 <body>
 <div class="app">
@@ -311,9 +337,67 @@
     <div class="note">Telegram ichida ochilganda profil ma’lumotlari ko‘rsatilishi mumkin. Haqiqiy kirish huquqi serverda tekshirilishi shart.</div>
     <a class="secondary" href="https://t.me/Umidovich_17" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none">Admin bilan bog‘lanish</a>
   </main>
+  <main id="settings-screen" class="screen">
+    <div class="section-head"><h3>Sozlamalar</h3><span class="subtle">Shaxsiy kabinet</span></div>
+
+    <section class="course-card settings-card">
+      <div class="course-label">CHAT</div>
+      <h4>Xabar yozish</h4>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <strong>Enter bilan xabar yuborish</strong>
+          <span>Yoqilganda Enter xabarni yuboradi. O‘chirilganda Enter yangi qator ochadi, Ctrl+Enter esa yuboradi.</span>
+        </div>
+        <input class="settings-toggle" id="setting-enter-to-send" type="checkbox" aria-label="Enter bilan xabar yuborish" />
+      </div>
+      <div class="settings-divider"></div>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <strong>Xabarni o‘chirishni tasdiqlash</strong>
+          <span>Xabarni chatdan olib tashlashdan oldin tasdiqlash so‘raladi.</span>
+        </div>
+        <input class="settings-toggle" id="setting-confirm-delete" type="checkbox" aria-label="Xabarni o‘chirishni tasdiqlash" />
+      </div>
+    </section>
+
+    <section class="course-card settings-card">
+      <div class="course-label">INTERFEYS</div>
+      <h4>Ko‘rinish</h4>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <strong>Animatsiyalarni kamaytirish</strong>
+          <span>O‘tish effektlarini kamaytiradi. Ilova sodda va tinchroq ko‘rinadi.</span>
+        </div>
+        <input class="settings-toggle" id="setting-reduce-motion" type="checkbox" aria-label="Animatsiyalarni kamaytirish" />
+      </div>
+    </section>
+
+    <section class="course-card settings-card">
+      <div class="course-label">AKKAUNT</div>
+      <h4>Telegram profilingiz</h4>
+      <div class="settings-account">
+        <div class="settings-account-avatar" id="settings-account-avatar">B</div>
+        <div class="settings-account-copy">
+          <strong id="settings-account-name">BBSS o‘quvchisi</strong>
+          <span id="settings-account-username">Telegram profili</span>
+          <small>ID: <span id="settings-account-id">—</span></small>
+        </div>
+      </div>
+      <button class="secondary settings-action" type="button" onclick="showScreen('profile')">Profilni ochish</button>
+    </section>
+
+    <section class="course-card settings-card">
+      <div class="course-label">BOSHQARUV</div>
+      <h4>Sozlamalarni tiklash</h4>
+      <p>Barcha shaxsiy sozlamalar standart holatga qaytariladi. Bu amal chat xabarlari yoki kurs ma’lumotlarini o‘chirmaydi.</p>
+      <button class="secondary settings-action" id="reset-settings-btn" type="button">Standart sozlamalarga qaytarish</button>
+      <div class="settings-save-note" id="settings-save-note" aria-live="polite">Sozlamalar ushbu qurilmada saqlanadi.</div>
+    </section>
+  </main>
+
   <p class="smallprint">© BBSS SYSTEM · Darslarga kirish serverda tekshiriladi.</p>
 </div>
-<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>☷</b>Chat</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button></div></nav>
+<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>☷</b>Chat</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button><button class="nav-btn" data-screen="settings" onclick="showScreen('settings')"><b>⚙</b>Sozlamalar</button></div></nav>
 <div class="toast" id="toast"></div>
 <script>
   function safeTelegramPhotoUrl(value) {
@@ -503,9 +587,116 @@
       showChatHub();
       loadChatDirectory(false);
     }
+    if (screen === 'settings') refreshSettingsAccount();
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
+
+  const SETTINGS_STORAGE_KEY = 'bbss-system-settings-v1';
+  const DEFAULT_APP_SETTINGS = Object.freeze({
+    enterToSend: true,
+    confirmBeforeDelete: true,
+    reduceMotion: false
+  });
+  let appSettings = readAppSettings();
+
+  function readAppSettings() {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
+      return {
+        enterToSend: typeof parsed.enterToSend === 'boolean' ? parsed.enterToSend : DEFAULT_APP_SETTINGS.enterToSend,
+        confirmBeforeDelete: typeof parsed.confirmBeforeDelete === 'boolean' ? parsed.confirmBeforeDelete : DEFAULT_APP_SETTINGS.confirmBeforeDelete,
+        reduceMotion: typeof parsed.reduceMotion === 'boolean' ? parsed.reduceMotion : DEFAULT_APP_SETTINGS.reduceMotion
+      };
+    } catch (_) {
+      return { ...DEFAULT_APP_SETTINGS };
+    }
+  }
+
+  function persistAppSettings() {
+    try {
+      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+      const note = document.getElementById('settings-save-note');
+      if (note) note.textContent = 'Sozlamalar saqlandi.';
+    } catch (_) {
+      const note = document.getElementById('settings-save-note');
+      if (note) note.textContent = 'Brauzer xotirasiga saqlab bo‘lmadi; tanlov joriy sessiyada amal qiladi.';
+    }
+  }
+
+  function refreshSettingsAccount() {
+    const name = document.getElementById('profile-name')?.textContent || 'BBSS o‘quvchisi';
+    const username = document.getElementById('profile-username')?.textContent || 'Telegram profili aniqlanmagan';
+    const id = document.getElementById('profile-id')?.textContent || '—';
+    const nameEl = document.getElementById('settings-account-name');
+    const usernameEl = document.getElementById('settings-account-username');
+    const idEl = document.getElementById('settings-account-id');
+    if (nameEl) nameEl.textContent = name;
+    if (usernameEl) usernameEl.textContent = username;
+    if (idEl) idEl.textContent = id;
+
+    const avatar = document.getElementById('settings-account-avatar');
+    const profileAvatar = document.getElementById('profile-avatar');
+    if (avatar && profileAvatar) {
+      avatar.replaceChildren();
+      const image = profileAvatar.querySelector('img');
+      if (image && image.src) {
+        const copy = document.createElement('img');
+        copy.src = image.src;
+        copy.alt = '';
+        avatar.appendChild(copy);
+      } else {
+        avatar.textContent = (name.trim().slice(0, 1) || 'B').toUpperCase();
+      }
+    }
+  }
+
+  function applyAppSettings() {
+    document.body.classList.toggle('reduce-motion', appSettings.reduceMotion);
+    const enter = document.getElementById('setting-enter-to-send');
+    const confirmDelete = document.getElementById('setting-confirm-delete');
+    const reduceMotion = document.getElementById('setting-reduce-motion');
+    if (enter) enter.checked = appSettings.enterToSend;
+    if (confirmDelete) confirmDelete.checked = appSettings.confirmBeforeDelete;
+    if (reduceMotion) reduceMotion.checked = appSettings.reduceMotion;
+  }
+
+  function setAppSetting(key, value) {
+    if (!Object.prototype.hasOwnProperty.call(DEFAULT_APP_SETTINGS, key)) return;
+    appSettings = { ...appSettings, [key]: Boolean(value) };
+    applyAppSettings();
+    persistAppSettings();
+  }
+
+  function initSettings() {
+    const controlKeys = [
+      ['setting-enter-to-send', 'enterToSend'],
+      ['setting-confirm-delete', 'confirmBeforeDelete'],
+      ['setting-reduce-motion', 'reduceMotion']
+    ];
+    controlKeys.forEach(([id, key]) => {
+      const control = document.getElementById(id);
+      if (control) control.addEventListener('change', () => setAppSetting(key, control.checked));
+    });
+
+    const reset = document.getElementById('reset-settings-btn');
+    if (reset) {
+      reset.addEventListener('click', () => {
+        appSettings = { ...DEFAULT_APP_SETTINGS };
+        applyAppSettings();
+        persistAppSettings();
+        const note = document.getElementById('settings-save-note');
+        if (note) note.textContent = 'Standart sozlamalar tiklandi.';
+        if (tg?.HapticFeedback?.impactOccurred) {
+          try { tg.HapticFeedback.impactOccurred('light'); } catch (_) {}
+        }
+      });
+    }
+
+    applyAppSettings();
+    refreshSettingsAccount();
+  }
+
 
   function addEmpty(container, message) {
     container.replaceChildren();
@@ -1240,6 +1431,10 @@
   }
 
   function confirmDeleteChatMessage(mode, messageId, button) {
+    if (!appSettings.confirmBeforeDelete) {
+      deleteChatMessage(mode, messageId, button);
+      return;
+    }
     const proceed = (confirmed) => { if (confirmed) deleteChatMessage(mode, messageId, button); };
     const text = 'Bu xabar chatdan olib tashlansinmi?';
     if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(text, proceed);
@@ -1267,7 +1462,8 @@
     if (form) form.addEventListener('submit', (event) => submitChatMessage(mode, event));
     if (input) {
       input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing &&
+            (appSettings.enterToSend || event.ctrlKey || event.metaKey)) {
           event.preventDefault();
           if (typeof form?.requestSubmit === 'function') form.requestSubmit();
           else submitChatMessage(mode, null);
@@ -1970,6 +2166,8 @@
   if (refreshChatDirectory) refreshChatDirectory.addEventListener('click', () => loadChatDirectory(false));
   bindChatComposer('group');
   bindChatComposer('direct');
+
+  initSettings();
 
   loadCourseCatalog();
 
