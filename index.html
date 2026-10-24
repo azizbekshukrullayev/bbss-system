@@ -262,7 +262,7 @@
     }
 
 </style>
-  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-cyan-blue-ui-1">
+  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-liquid-glass-1">
 </head>
 <body>
 <div class="app">
@@ -816,7 +816,8 @@
     if (screen !== 'chat') document.body.classList.remove('chat-fullscreen-mode');
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById(screen+'-screen').classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===screen));
+    const navScreen = screen === 'settings' ? 'profile' : screen;
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===navScreen));
     requestAnimationFrame(() => syncNavGlassIndicator(true));
     window.scrollTo({top:0, behavior:'smooth'});
     if (screen === 'profile' && isAdminPreview) {
