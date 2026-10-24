@@ -246,6 +246,7 @@
     .learning-certificate-preview p{font-size:11px;line-height:1.5;color:#e0d9c7;margin:8px 0}
     .learning-certificate-code{display:inline-block;margin-top:10px;padding:7px 11px;border:1px solid #5a4c2c;border-radius:7px;color:var(--gold2);font-size:11px;letter-spacing:1px}
     .learning-stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .learning-admin-progress-list{display:flex;flex-direction:column;gap:8px}
     .learning-stat{border:1px solid #303034;border-radius:10px;padding:12px;background:#151517}
     .learning-stat strong{display:block;font-size:21px;color:var(--gold2)}
     .learning-stat span{display:block;font-size:10px;line-height:1.4;color:var(--muted);margin-top:4px}
@@ -468,6 +469,9 @@
     <section class="course-card learning-panel admin-tools" id="learning-admin-stats" hidden aria-hidden="true">
       <div class="course-label">ADMIN ANALITIKA</div><h4>Platforma statistikasi</h4>
       <div class="learning-stats-grid" id="learning-admin-stats-grid"></div>
+      <div class="learning-divider"></div>
+      <div class="course-label">STUDENTLAR PROGRESSI</div><h4>Har bir o‘quvchi</h4>
+      <div class="learning-admin-progress-list" id="learning-admin-progress-list"><div class="empty">Progress yuklanmoqda…</div></div>
     </section>
   </main>
 
@@ -895,7 +899,10 @@
     ['learning-quiz-admin','learning-announcement-admin','learning-admin-stats'].forEach((id)=>{
       const el=document.getElementById(id); if(el){el.hidden=!admin;el.setAttribute('aria-hidden',String(!admin));}
     });
-    if(admin) renderLearningAdminStats(d.adminStats);
+    if(admin) {
+      renderLearningAdminStats(d.adminStats);
+      renderLearningAdminProgress(Array.isArray(d.adminProgress)?d.adminProgress:[]);
+    }
     const certButton=document.getElementById('learning-certificate-btn');
     if(certButton) certButton.textContent = percent===100 && lessons.length ? 'Sertifikatni yaratish / ko‘rsatish' : 'Sertifikat olish imkoniyatini tekshirish';
   }
@@ -1083,6 +1090,32 @@
     ];
     items.forEach(([label,value])=>{
       const box=learningEl('div','learning-stat');box.append(learningEl('strong','',value),learningEl('span','',label));container.appendChild(box);
+    });
+  }
+
+  function renderLearningAdminProgress(students) {
+    const container=document.getElementById('learning-admin-progress-list');
+    if(!container)return;
+    container.replaceChildren();
+    if(!students.length){addEmpty(container,'Hozircha progress ko‘rsatadigan faol student yo‘q.');return;}
+    students.forEach((student)=>{
+      const card=learningEl('article','learning-item-card');
+      const head=learningEl('div','learning-item-head');
+      const identity=learningEl('div','learning-check-copy');
+      identity.append(
+        learningEl('strong','',student.displayName||'BBSS o‘quvchisi'),
+        learningEl('small','',(student.username?'@'+student.username+' · ':'')+'ID: '+student.telegramId)
+      );
+      head.appendChild(identity);
+      head.appendChild(learningEl('span','learning-pill',student.percent+'%'));
+      card.appendChild(head);
+      const track=learningEl('div','learning-progress-track');
+      track.style.margin='10px 0 6px';
+      const fill=learningEl('span','');
+      fill.style.width=Math.max(0,Math.min(100,Number(student.percent)||0))+'%';
+      track.appendChild(fill);card.appendChild(track);
+      card.appendChild(learningEl('div','learning-item-sub',(student.completedLessons||0)+' / '+(student.totalLessons||0)+' dars tugallangan'));
+      container.appendChild(card);
     });
   }
 
