@@ -149,87 +149,70 @@
     } catch (_) { return null; }
   }
   function setAvatarPhoto(element, photoUrl, fallback = 'B') {
-  if (!element) return;
+    if (!element) return;
 
-  // Avatar turiga qarab qat'iy o'lcham belgilash.
-  let size = null;
+    // Avatarning o'zini qat'iy o'lchamli konteyner sifatida saqlaymiz.
+    const size = element.classList.contains('big-avatar')
+      ? 66
+      : element.classList.contains('admin-enrollment-avatar')
+        ? 30
+        : element.classList.contains('avatar')
+          ? 38
+          : null;
 
-  if (element.classList.contains('big-avatar')) {
-    size = 66;
-  } else if (element.classList.contains('admin-enrollment-avatar')) {
-    size = 30;
-  } else if (element.classList.contains('avatar')) {
-    size = 38;
-  }
-
-  // Rasm avatar maydonidan tashqariga chiqmasin.
-  element.style.setProperty('position', 'relative', 'important');
-  element.style.setProperty('overflow', 'hidden', 'important');
-  element.style.setProperty('box-sizing', 'border-box', 'important');
-  element.style.setProperty('isolation', 'isolate', 'important');
-
-  if (size !== null) {
-    element.style.setProperty('width', size + 'px', 'important');
-    element.style.setProperty('height', size + 'px', 'important');
-    element.style.setProperty('min-width', size + 'px', 'important');
-    element.style.setProperty('min-height', size + 'px', 'important');
-    element.style.setProperty('max-width', size + 'px', 'important');
-    element.style.setProperty('max-height', size + 'px', 'important');
-    element.style.setProperty('flex-shrink', '0', 'important');
-  }
-
-  element.replaceChildren();
-
-  const safeUrl = safeTelegramPhotoUrl(photoUrl);
-
-  if (!safeUrl) {
-    element.textContent = fallback || 'B';
-    return;
-  }
-
-  const img = document.createElement('img');
-
-  img.src = safeUrl;
-  img.alt = 'Profil rasmi';
-  img.loading = 'lazy';
-  img.referrerPolicy = 'no-referrer';
-  img.draggable = false;
-
-  // Rasm faqat avatar ichida joylashadi.
-  const imageStyles = {
-    position: 'absolute',
-    inset: '0',
-    display: 'block',
-    width: '100%',
-    height: '100%',
-    minWidth: '0',
-    minHeight: '0',
-    maxWidth: '100%',
-    maxHeight: '100%',
-    objectFit: 'cover',
-    objectPosition: 'center',
-    borderRadius: 'inherit',
-    margin: '0',
-    padding: '0',
-    boxSizing: 'border-box',
-    pointerEvents: 'none'
-  };
-
-  Object.entries(imageStyles).forEach(([key, value]) => {
-    img.style.setProperty(
-      key.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase()),
-      value,
-      'important'
-    );
-  });
-
-  img.addEventListener('error', () => {
     element.replaceChildren();
-    element.textContent = fallback || 'B';
-  }, { once: true });
+    element.textContent = '';
+    element.style.setProperty('position', 'relative', 'important');
+    element.style.setProperty('display', 'grid', 'important');
+    element.style.setProperty('place-items', 'center', 'important');
+    element.style.setProperty('overflow', 'hidden', 'important');
+    element.style.setProperty('box-sizing', 'border-box', 'important');
+    element.style.setProperty('border-radius', '50%', 'important');
+    element.style.setProperty('background-repeat', 'no-repeat', 'important');
+    element.style.setProperty('background-position', 'center center', 'important');
+    element.style.setProperty('background-size', 'cover', 'important');
+    element.style.setProperty('background-clip', 'padding-box', 'important');
+    element.style.setProperty('isolation', 'isolate', 'important');
 
-  element.appendChild(img);
-}
+    if (size !== null) {
+      for (const property of ['width', 'height', 'min-width', 'min-height', 'max-width', 'max-height']) {
+        element.style.setProperty(property, size + 'px', 'important');
+      }
+      element.style.setProperty('flex', '0 0 ' + size + 'px', 'important');
+    }
+
+    const safeUrl = safeTelegramPhotoUrl(photoUrl);
+    if (!safeUrl) {
+      element.style.removeProperty('background-image');
+      element.textContent = fallback || 'B';
+      return;
+    }
+
+    // Foydalanuvchi rasmi <img> sifatida qo'shilmaydi: background avatar
+    // konteyneridan tashqariga kengaya olmaydi, hatto Telegram WebView'da ham.
+    const escapedUrl = safeUrl.replace(/["\\\\\n\r]/g, (char) => '\\\\' + char);
+    element.style.setProperty(
+      'background-image',
+      'url("' + escapedUrl + '")',
+      'important',
+    );
+    element.setAttribute('aria-label', 'Profil rasmi');
+
+    const probe = new Image();
+    probe.onload = () => {
+      // Rasm yuklanayotganda boshqa rasm bilan almashtirilgan bo'lsa, tegmang.
+      if (element.style.backgroundImage.includes(escapedUrl)) {
+        element.textContent = '';
+      }
+    };
+    probe.onerror = () => {
+      if (element.style.backgroundImage.includes(escapedUrl)) {
+        element.style.removeProperty('background-image');
+        element.textContent = fallback || 'B';
+      }
+    };
+    probe.src = safeUrl;
+  }
 
   async function prepareAvatarImage(file) {
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
