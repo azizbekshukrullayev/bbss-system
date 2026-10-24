@@ -191,6 +191,74 @@
     body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
     @media(max-width:360px){.nav-btn{font-size:9px;padding-left:1px;padding-right:1px}.nav-btn b{font-size:16px}.settings-card{padding:13px}.settings-copy strong{font-size:12px}}
 
+
+    .learning-panel{padding:16px;margin-bottom:12px}
+    .learning-panel h4,.learning-progress-card h4{margin:7px 0 10px;font-size:15px}
+    .learning-muted{font-size:11px;line-height:1.5;color:var(--muted);margin:0 0 13px}
+    .learning-progress-card{padding:17px;margin-bottom:12px;border-color:#4d4021;background:linear-gradient(145deg,#1a1812,#141415 70%)}
+    .learning-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .learning-progress-percent{font-size:25px;font-weight:850;letter-spacing:-1px;color:var(--gold2)}
+    .learning-progress-track{height:7px;overflow:hidden;border-radius:999px;background:#2b2b2e;margin:14px 0 9px}
+    .learning-progress-track span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#8e7135,#f2d67e);transition:width .25s ease}
+    .learning-progress-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:10px}
+    .learning-section-caption{font-size:11px;color:#d7c88f;margin-top:18px;margin-bottom:8px}
+    .learning-lesson-list,.learning-item-list{display:flex;flex-direction:column;gap:8px}
+    .learning-check-row{display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #2b2b2d;border-radius:10px;background:#151517;min-width:0}
+    .learning-check-row input{accent-color:var(--gold);width:17px;height:17px;flex:0 0 17px}
+    .learning-check-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+    .learning-check-copy strong{font-size:11px;line-height:1.35}
+    .learning-check-copy small{font-size:9px;color:var(--muted)}
+    .learning-inline-form{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .learning-input{display:block;width:100%;min-width:0;box-sizing:border-box;border:1px solid #38383b;border-radius:10px;padding:10px 11px;background:#171719;color:var(--text);font:inherit;font-size:12px;outline:none}
+    .learning-input:focus{border-color:#8b713c}
+    .learning-textarea{resize:vertical;min-height:70px;line-height:1.45}
+    .learning-button{white-space:nowrap;margin:0}
+    .learning-form{display:flex;flex-direction:column;gap:9px}
+    .learning-form .primary{width:100%;margin:0}
+    .learning-form-note{font-size:10px;line-height:1.4;color:var(--muted)}
+    .learning-divider{height:1px;background:var(--line);margin:15px 0}
+    .learning-check{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);line-height:1.4}
+    .learning-check input{accent-color:var(--gold)}
+    .learning-item-card{border:1px solid #2b2b2f;border-radius:11px;padding:11px;background:#151517;min-width:0}
+    .learning-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .learning-item-head strong{font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+    .learning-item-sub{color:var(--muted);font-size:9px;line-height:1.4;margin-top:4px}
+    .learning-item-body{font-size:11px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:#d8d5cc;margin-top:8px}
+    .learning-item-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .learning-mini-btn{border:1px solid #48402e;border-radius:8px;padding:6px 9px;background:#211e17;color:var(--gold2);font-size:10px;line-height:1.35}
+    .learning-pill{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;background:#262116;color:#d8c484;font-size:9px;white-space:nowrap}
+    .learning-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .learning-form-grid label,.learning-field-label{display:flex;flex-direction:column;gap:5px;font-size:10px;color:var(--muted);min-width:0}
+    .learning-qa-answer{padding:8px 9px;margin-top:8px;border-left:2px solid #61532f;background:#1b1a16;border-radius:0 8px 8px 0}
+    .learning-qa-answer strong{font-size:10px;color:var(--gold2)}
+    .learning-qa-answer p{font-size:11px;line-height:1.45;color:#ddd8c9;margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+    .learning-qa-answer-form{display:flex;gap:6px;align-items:flex-end;margin-top:9px}
+    .learning-qa-answer-form textarea{flex:1;min-width:0;min-height:50px}
+    .learning-qa-answer-form button{flex:0 0 auto}
+    .learning-quiz-play{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+    .learning-quiz-question{padding:11px;border:1px solid #303034;border-radius:10px;margin-bottom:9px;background:#171719}
+    .learning-quiz-question h5{font-size:12px;line-height:1.5;margin:0 0 9px}
+    .learning-quiz-option{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.4;color:#dedbd3;margin:9px 0}
+    .learning-quiz-option input{accent-color:var(--gold);margin-top:2px}
+    .learning-certificate-preview{border:1px solid #88713a;border-radius:14px;padding:22px 15px;text-align:center;background:radial-gradient(ellipse at top,#2b2516,#111113 72%);margin-top:12px}
+    .learning-certificate-preview .cert-brand{font-size:10px;letter-spacing:3px;color:var(--gold2)}
+    .learning-certificate-preview h3{font-family:Georgia,serif;font-size:24px;color:#f3dd99;margin:16px 0 6px}
+    .learning-certificate-preview p{font-size:11px;line-height:1.5;color:#e0d9c7;margin:8px 0}
+    .learning-certificate-code{display:inline-block;margin-top:10px;padding:7px 11px;border:1px solid #5a4c2c;border-radius:7px;color:var(--gold2);font-size:11px;letter-spacing:1px}
+    .learning-stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .learning-stat{border:1px solid #303034;border-radius:10px;padding:12px;background:#151517}
+    .learning-stat strong{display:block;font-size:21px;color:var(--gold2)}
+    .learning-stat span{display:block;font-size:10px;line-height:1.4;color:var(--muted);margin-top:4px}
+    .learning-save-remove{border:0;background:transparent;color:#bda35d;font-size:10px;padding:5px}
+    .learning-nav-lock-note{font-size:10px;color:var(--muted);margin:6px 0}
+    @media(max-width:380px){.learning-panel{padding:12px}.learning-form-grid{gap:7px}.learning-input{padding:9px}.learning-inline-form{align-items:stretch;flex-direction:column}.learning-button{width:100%}}
+    @media print{
+      body *{visibility:hidden!important}
+      #learning-certificate-preview,#learning-certificate-preview *{visibility:visible!important}
+      #learning-certificate-preview{display:block!important;position:fixed!important;inset:0!important;margin:0!important;border-radius:0!important;background:white!important;color:#111!important;border:8px double #91753b!important;box-shadow:none!important;padding:40px!important}
+      #learning-certificate-preview h3,#learning-certificate-preview p,#learning-certificate-preview .cert-brand,#learning-certificate-preview .learning-certificate-code{color:#111!important}
+    }
+
 </style>
 </head>
 <body>
@@ -297,6 +365,112 @@
     </section>
   </main>
 
+  <main id="tools-screen" class="screen">
+    <div class="section-head"><h3>O‘quv vositalari</h3><span class="subtle">BBSS LAB</span></div>
+
+    <section class="course-card learning-progress-card">
+      <div class="learning-card-top">
+        <div><div class="course-label">SIZNING NATIJANGIZ</div><h4>O‘rganish jarayoni</h4></div>
+        <span class="learning-progress-percent" id="learning-progress-percent">0%</span>
+      </div>
+      <div class="learning-progress-track"><span id="learning-progress-bar"></span></div>
+      <div class="learning-progress-meta"><span id="learning-progress-summary">0 / 0 dars tugallangan</span><span id="learning-saved-summary">0 ta saqlangan</span></div>
+      <div class="learning-section-caption">Darslarni tugallangan deb belgilash</div>
+      <div class="learning-lesson-list" id="learning-progress-list"><div class="empty">Ma’lumot yuklanmoqda…</div></div>
+    </section>
+
+    <section class="course-card learning-panel">
+      <div class="course-label">KEYINROQ KO‘RISH</div><h4>⭐ Saqlangan darslar</h4>
+      <div class="learning-inline-form">
+        <select class="learning-input" id="learning-save-lesson-select" aria-label="Saqlash uchun darsni tanlang"><option value="">Darsni tanlang…</option></select>
+        <button class="secondary learning-button" id="learning-save-lesson-btn" type="button">Saqlash</button>
+      </div>
+      <div class="learning-item-list" id="learning-saved-list"><div class="empty">Saqlangan darslar yo‘q.</div></div>
+    </section>
+
+    <section class="course-card learning-panel">
+      <div class="course-label">BILIMNI TEKSHIRISH</div><h4>Testlar va imtihonlar</h4>
+      <p class="learning-muted">Savollarga javob bering, natijangizni darhol ko‘ring va avvalgi natijalarni kuzating.</p>
+      <div class="learning-item-list" id="learning-quiz-list"><div class="empty">Testlar yuklanmoqda…</div></div>
+      <div id="learning-quiz-play" class="learning-quiz-play" hidden></div>
+    </section>
+
+    <section class="course-card learning-panel">
+      <div class="course-label">E’LONLAR</div><h4>Yangiliklar va muhim xabarlar</h4>
+      <div class="learning-item-list" id="learning-announcements"><div class="empty">E’lonlar yuklanmoqda…</div></div>
+      <div class="admin-tools learning-admin-subpanel" id="learning-announcement-admin" hidden aria-hidden="true">
+        <div class="learning-divider"></div><div class="course-label">ADMIN</div><h4>Yangi e’lon</h4>
+        <form id="learning-announcement-form" class="learning-form">
+          <input class="learning-input" id="learning-announcement-title" maxlength="160" placeholder="E’lon sarlavhasi" required />
+          <textarea class="learning-input learning-textarea" id="learning-announcement-body" maxlength="5000" rows="4" placeholder="E’lon matni" required></textarea>
+          <label class="learning-check"><input id="learning-announcement-pin" type="checkbox" /> Muhim e’lon sifatida yuqoriga biriktirish</label>
+          <button class="primary" type="submit">E’lonni joylash</button>
+          <div class="learning-form-note" id="learning-announcement-note" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="course-card learning-panel">
+      <div class="course-label">HAMJAMIYAT</div><h4>Savol-javob</h4>
+      <p class="learning-muted">Dars bo‘yicha savol qoldiring yoki boshqa studentlarga yordam bering.</p>
+      <form id="learning-question-form" class="learning-form">
+        <input class="learning-input" id="learning-question-title" maxlength="180" placeholder="Savol sarlavhasi" required />
+        <textarea class="learning-input learning-textarea" id="learning-question-body" maxlength="4000" rows="3" placeholder="Savolingizni batafsil yozing…" required></textarea>
+        <select class="learning-input" id="learning-question-lesson"><option value="">Umumiy savol (dars tanlanmagan)</option></select>
+        <button class="primary" type="submit">Savol yuborish</button>
+        <div class="learning-form-note" id="learning-question-note" aria-live="polite"></div>
+      </form>
+      <div class="learning-item-list learning-qa-list" id="learning-qa-list"><div class="empty">Savol-javoblar yuklanmoqda…</div></div>
+    </section>
+
+    <section class="course-card learning-panel">
+      <div class="course-label">AMALIY SAVDO</div><h4>Trading Journal</h4>
+      <p class="learning-muted">Demo yoki real bitimlaringizni qayd eting. Bu kundalik bitimni boshqarish uchun; signal yoki daromad kafolati emas.</p>
+      <form id="learning-journal-form" class="learning-form">
+        <div class="learning-form-grid">
+          <label>Instrument<select class="learning-input" id="journal-symbol"><option value="XAUUSD">XAUUSD</option><option value="EURUSD">EURUSD</option></select></label>
+          <label>Yo‘nalish<select class="learning-input" id="journal-direction"><option value="LONG">BUY / LONG</option><option value="SHORT">SELL / SHORT</option></select></label>
+          <label>Kirish narxi<input class="learning-input" id="journal-entry" type="number" step="any" min="0.000001" placeholder="Masalan, 2735.50" required /></label>
+          <label>Stop-loss<input class="learning-input" id="journal-stop" type="number" step="any" min="0.000001" placeholder="Ixtiyoriy" /></label>
+          <label>Take-profit<input class="learning-input" id="journal-target" type="number" step="any" min="0.000001" placeholder="Ixtiyoriy" /></label>
+          <label>Chiqish narxi<input class="learning-input" id="journal-exit" type="number" step="any" min="0.000001" placeholder="Ixtiyoriy" /></label>
+          <label>Natija<select class="learning-input" id="journal-outcome"><option value="OPEN">Ochiq</option><option value="WIN">Foyda</option><option value="LOSS">Zarar</option><option value="BE">BE / 0</option></select></label>
+        </div>
+        <input class="learning-input" id="journal-setup" maxlength="180" placeholder="Strategiya (masalan: FVG + OB)" />
+        <textarea class="learning-input learning-textarea" id="journal-notes" maxlength="3000" rows="3" placeholder="Kirish sababi, xatolar va xulosa…"></textarea>
+        <button class="primary" type="submit">Bitimni saqlash</button>
+        <div class="learning-form-note" id="learning-journal-note" aria-live="polite"></div>
+      </form>
+      <div class="learning-journal-summary" id="learning-journal-summary"></div>
+      <div class="learning-item-list" id="learning-journal-list"><div class="empty">Hali bitim yo‘q.</div></div>
+    </section>
+
+    <section class="course-card learning-panel" id="learning-certificate-panel">
+      <div class="course-label">YAKUNIY NATIJA</div><h4>Sertifikat</h4>
+      <p class="learning-muted">Barcha e’lon qilingan darslar tugallangach, shaxsiy sertifikat kodi yaratiladi.</p>
+      <button class="primary" type="button" id="learning-certificate-btn">Sertifikat olish imkoniyatini tekshirish</button>
+      <div id="learning-certificate-list" class="learning-item-list"><div class="empty">Sertifikatlar yuklanmoqda…</div></div>
+      <div id="learning-certificate-preview" class="learning-certificate-preview" hidden></div>
+    </section>
+
+    <section class="course-card learning-panel admin-tools" id="learning-quiz-admin" hidden aria-hidden="true">
+      <div class="course-label">ADMIN BOSHQARUVI</div><h4>Yangi test yaratish</h4>
+      <form id="learning-quiz-form" class="learning-form">
+        <input class="learning-input" id="learning-quiz-title" maxlength="140" placeholder="Test nomi" required />
+        <input class="learning-input" id="learning-quiz-description" maxlength="1000" placeholder="Qisqa izoh (ixtiyoriy)" />
+        <label class="learning-field-label">O‘tish foizi <input class="learning-input" id="learning-quiz-pass" type="number" min="1" max="100" value="70" required /></label>
+        <textarea class="learning-input learning-textarea" id="learning-quiz-questions" rows="6" placeholder="Har savolni yangi qatordan yozing:&#10;FVG nima? | Bo‘shliq | Fair Value Gap | Trend | 2&#10;Har qatorda: savol | variant 1 | variant 2 | variant 3 | to‘g‘ri variant raqami" required></textarea>
+        <button class="primary" type="submit">Testni yaratish va studentlarga ochish</button>
+        <div class="learning-form-note" id="learning-quiz-note" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="course-card learning-panel admin-tools" id="learning-admin-stats" hidden aria-hidden="true">
+      <div class="course-label">ADMIN ANALITIKA</div><h4>Platforma statistikasi</h4>
+      <div class="learning-stats-grid" id="learning-admin-stats-grid"></div>
+    </section>
+  </main>
+
   <main id="profile-screen" class="screen">
     <div class="section-head"><h3>Mening profilim</h3><span class="subtle">O‘quvchi kabineti</span></div>
     <section class="profile-box">
@@ -397,7 +571,7 @@
 
   <p class="smallprint">© BBSS SYSTEM · Darslarga kirish serverda tekshiriladi.</p>
 </div>
-<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>☷</b>Chat</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button><button class="nav-btn" data-screen="settings" onclick="showScreen('settings')"><b>⚙</b>Sozlamalar</button></div></nav>
+<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>☷</b>Chat</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button><button class="nav-btn" id="nav-tools-btn" data-screen="tools" onclick="showScreen('tools')" hidden><b>▣</b>Amaliyot</button><button class="nav-btn" data-screen="settings" onclick="showScreen('settings')"><b>⚙</b>Sozlamalar</button></div></nav>
 <div class="toast" id="toast"></div>
 <script>
   function safeTelegramPhotoUrl(value) {
@@ -588,9 +762,423 @@
       loadChatDirectory(false);
     }
     if (screen === 'settings') refreshSettingsAccount();
+    if (screen === 'tools') loadLearningDashboard();
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
+
+  let learningDashboard = null;
+  let learningToolsLoading = false;
+  let activeQuiz = null;
+
+  async function loadLearningDashboard() {
+    if (learningToolsLoading || !document.getElementById('tools-screen')?.classList.contains('active')) return;
+    learningToolsLoading = true;
+    const list = document.getElementById('learning-progress-list');
+    if (!learningDashboard && list) addEmpty(list, 'Ma’lumot yuklanmoqda…');
+    try {
+      const data = await invokeSecureAction('learning_dashboard');
+      learningDashboard = data.dashboard || {};
+      renderLearningDashboard();
+    } catch (error) {
+      if (list) addEmpty(list, error && error.message ? error.message : 'O‘quv vositalarini yuklab bo‘lmadi.');
+      showToast(error && error.message ? error.message : 'O‘quv vositalarini yuklab bo‘lmadi.');
+      console.error('Learning dashboard error:', error);
+    } finally {
+      learningToolsLoading = false;
+    }
+  }
+
+  function learningEl(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== undefined && text !== null) el.textContent = String(text);
+    return el;
+  }
+
+  function learningItem(title, sub, body) {
+    const card = learningEl('article','learning-item-card');
+    const head = learningEl('div','learning-item-head');
+    head.appendChild(learningEl('strong','',title));
+    card.appendChild(head);
+    if (sub) card.appendChild(learningEl('div','learning-item-sub',sub));
+    if (body) card.appendChild(learningEl('div','learning-item-body',body));
+    return card;
+  }
+
+  function renderLearningDashboard() {
+    if (!learningDashboard) return;
+    const d = learningDashboard;
+    const lessons = Array.isArray(d.lessons) ? d.lessons : [];
+    const completed = new Set(Array.isArray(d.completedLessonIds) ? d.completedLessonIds : []);
+    const saved = new Set(Array.isArray(d.savedLessonIds) ? d.savedLessonIds : []);
+    const percent = lessons.length ? Math.round(completed.size * 100 / lessons.length) : 0;
+    const percentEl = document.getElementById('learning-progress-percent');
+    const bar = document.getElementById('learning-progress-bar');
+    if (percentEl) percentEl.textContent = percent + '%';
+    if (bar) bar.style.width = percent + '%';
+    const summary = document.getElementById('learning-progress-summary');
+    const savedSummary = document.getElementById('learning-saved-summary');
+    if (summary) summary.textContent = completed.size + ' / ' + lessons.length + ' dars tugallangan';
+    if (savedSummary) savedSummary.textContent = saved.size + ' ta saqlangan';
+
+    const progressList = document.getElementById('learning-progress-list');
+    progressList.replaceChildren();
+    if (!lessons.length) addEmpty(progressList,'E’lon qilingan darslar topilmadi.');
+    lessons.forEach((lesson) => {
+      const row = learningEl('label','learning-check-row');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = completed.has(String(lesson.id));
+      checkbox.setAttribute('aria-label',lesson.title+' tugallangan');
+      checkbox.addEventListener('change', () => setLessonCompleted(lesson.id, checkbox.checked));
+      const copy = learningEl('span','learning-check-copy');
+      copy.append(learningEl('strong','',lesson.title), learningEl('small','',lesson.moduleTitle+' · '+String(lesson.content_type || 'dars').toUpperCase()));
+      row.append(checkbox,copy);
+      progressList.appendChild(row);
+    });
+
+    const saveSelect = document.getElementById('learning-save-lesson-select');
+    const questionLesson = document.getElementById('learning-question-lesson');
+    [saveSelect,questionLesson].forEach((select) => {
+      if (!select) return;
+      const selected = select.value;
+      select.replaceChildren();
+      select.appendChild(new Option(select === questionLesson ? 'Umumiy savol (dars tanlanmagan)' : 'Darsni tanlang…',''));
+      lessons.forEach((lesson) => select.appendChild(new Option(lesson.moduleTitle+' — '+lesson.title,String(lesson.id))));
+      select.value = selected;
+    });
+
+    const savedList = document.getElementById('learning-saved-list');
+    savedList.replaceChildren();
+    const savedLessons = lessons.filter((lesson) => saved.has(String(lesson.id)));
+    if (!savedLessons.length) addEmpty(savedList,'Hozircha saqlangan dars yo‘q.');
+    savedLessons.forEach((lesson) => {
+      const card = learningItem(lesson.title,lesson.moduleTitle,lesson.description || '');
+      const actions = learningEl('div','learning-item-actions');
+      const remove = learningEl('button','learning-mini-btn','Saqlanganlardan olib tashlash');
+      remove.type='button';
+      remove.addEventListener('click', async () => {
+        await toggleSavedLesson(lesson.id,false);
+      });
+      actions.appendChild(remove);
+      card.appendChild(actions);
+      savedList.appendChild(card);
+    });
+
+    const quizList = document.getElementById('learning-quiz-list');
+    quizList.replaceChildren();
+    const quizzes = Array.isArray(d.quizzes) ? d.quizzes : [];
+    if (!quizzes.length) addEmpty(quizList,'Hozircha test yo‘q.');
+    quizzes.forEach((quiz) => {
+      const card=learningItem(quiz.title,'O‘tish bali: '+quiz.pass_percent+'% · '+(quiz.description || 'Modul testi'),'');
+      const actions=learningEl('div','learning-item-actions');
+      const button=learningEl('button','learning-mini-btn','Testni boshlash');
+      button.type='button'; button.addEventListener('click',()=>openLearningQuiz(quiz.id));
+      actions.appendChild(button); card.appendChild(actions); quizList.appendChild(card);
+    });
+
+    const ann = document.getElementById('learning-announcements');
+    ann.replaceChildren();
+    const announcements = Array.isArray(d.announcements) ? d.announcements : [];
+    if (!announcements.length) addEmpty(ann,'Hozircha e’lon yo‘q.');
+    announcements.forEach((item) => {
+      const card=learningItem((item.is_pinned?'📌 ':'')+item.title,new Date(item.published_at || item.created_at).toLocaleString('uz-UZ'),item.body);
+      ann.appendChild(card);
+    });
+
+    renderLearningQuestions(Array.isArray(d.questions)?d.questions:[]);
+    renderLearningJournal(Array.isArray(d.journal)?d.journal:[]);
+    renderLearningCertificates(Array.isArray(d.certificates)?d.certificates:[]);
+
+    const admin=!!d.adminStats;
+    ['learning-quiz-admin','learning-announcement-admin','learning-admin-stats'].forEach((id)=>{
+      const el=document.getElementById(id); if(el){el.hidden=!admin;el.setAttribute('aria-hidden',String(!admin));}
+    });
+    if(admin) renderLearningAdminStats(d.adminStats);
+    const certButton=document.getElementById('learning-certificate-btn');
+    if(certButton) certButton.textContent = percent===100 && lessons.length ? 'Sertifikatni yaratish / ko‘rsatish' : 'Sertifikat olish imkoniyatini tekshirish';
+  }
+
+  async function refreshLearningDashboard() {
+    learningDashboard = null;
+    await loadLearningDashboard();
+  }
+
+  async function setLessonCompleted(lessonId, completed) {
+    try {
+      await invokeSecureAction('lesson_progress_set',{lessonId,completed});
+      showToast(completed?'Dars tugallangan deb belgilandi.':'Dars belgisi olib tashlandi.');
+      await refreshLearningDashboard();
+    } catch(error) {
+      showToast(error && error.message ? error.message : 'Progress saqlanmadi.');
+    }
+  }
+
+  async function toggleSavedLesson(lessonId,saved) {
+    try {
+      await invokeSecureAction('saved_lesson_toggle',{lessonId,saved});
+      await refreshLearningDashboard();
+      showToast(saved?'Dars saqlandi.':'Saqlanganlardan olib tashlandi.');
+    } catch(error) {
+      showToast(error && error.message ? error.message : 'Darsni saqlab bo‘lmadi.');
+    }
+  }
+
+  async function openLearningQuiz(quizId) {
+    const panel=document.getElementById('learning-quiz-play');
+    if(!panel)return;
+    panel.hidden=false;
+    panel.replaceChildren(learningEl('div','empty','Test yuklanmoqda…'));
+    try {
+      const data=await invokeSecureAction('quiz_detail',{quizId});
+      activeQuiz={quiz:data.quiz,questions:data.questions||[]};
+      panel.replaceChildren();
+      panel.appendChild(learningEl('h4','',data.quiz.title));
+      if(data.quiz.description)panel.appendChild(learningEl('p','learning-muted',data.quiz.description));
+      if(!activeQuiz.questions.length){addEmpty(panel,'Testda savollar yo‘q.');return;}
+      const form=document.createElement('form');form.className='learning-form';
+      activeQuiz.questions.forEach((question,index)=>{
+        const field=learningEl('fieldset','learning-quiz-question');
+        field.appendChild(learningEl('h5','',(index+1)+'. '+question.question));
+        const options=Array.isArray(question.options)?question.options:[];
+        options.forEach((option,optionIndex)=>{
+          const label=learningEl('label','learning-quiz-option');
+          const radio=document.createElement('input');radio.type='radio';radio.name='quiz-'+index;radio.value=String(optionIndex);radio.required=true;
+          label.append(radio,learningEl('span','',option));field.appendChild(label);
+        });
+        form.appendChild(field);
+      });
+      const submit=learningEl('button','primary','Javoblarni tekshirish');submit.type='submit';form.appendChild(submit);
+      const result=learningEl('div','learning-form-note','');result.setAttribute('aria-live','polite');form.appendChild(result);
+      form.addEventListener('submit',async(event)=>{
+        event.preventDefault();submit.disabled=true;
+        const answers=activeQuiz.questions.map((_,index)=>{
+          const checked=form.querySelector('input[name="quiz-'+index+'"]:checked');
+          return checked?Number(checked.value):-1;
+        });
+        try{
+          const res=await invokeSecureAction('quiz_submit',{quizId,answers});
+          result.textContent='Natija: '+res.attempt.score+'/'+res.attempt.total_questions+
+            ' ('+Math.round(res.attempt.score*100/res.attempt.total_questions)+'%). '+
+            (res.attempt.passed?'Tabriklaymiz, testdan o‘tdingiz!':'Hali o‘tish bali yetmadi. Yana urinib ko‘ring.');
+          activeQuiz.questions.forEach((question,index)=>{
+            const feedback=res.results[index];
+            const note=learningEl('div','learning-item-sub',
+              (feedback.isCorrect?'✅ To‘g‘ri. ':'❌ To‘g‘ri javob: ')+String(question.options[feedback.correctIndex]||'')+
+              (feedback.explanation?' — '+feedback.explanation:''));
+            form.children[index]?.appendChild(note);
+          });
+          submit.textContent='Test yakunlandi';
+          await refreshLearningDashboard();
+        }catch(error){result.textContent=error&&error.message?error.message:'Test natijasi olinmadi.';submit.disabled=false;}
+      });
+      panel.appendChild(form);
+      panel.scrollIntoView({behavior:'smooth',block:'start'});
+    }catch(error){
+      panel.replaceChildren(learningEl('div','empty',error&&error.message?error.message:'Test yuklanmadi.'));
+    }
+  }
+
+  function renderLearningQuestions(questions) {
+    const container=document.getElementById('learning-qa-list');container.replaceChildren();
+    if(!questions.length){addEmpty(container,'Hozircha savol yo‘q. Birinchi bo‘lib savol bering.');return;}
+    questions.forEach((question)=>{
+      const card=learningItem(question.title,(question.author||'Student')+' · '+new Date(question.createdAt).toLocaleString('uz-UZ'),question.body);
+      const state=learningEl('div','learning-item-actions');
+      const pill=learningEl('span','learning-pill',question.status==='open'?'Javob kutilmoqda':question.status==='answered'?'Javob berilgan':'Yopilgan');
+      state.appendChild(pill);card.appendChild(state);
+      (question.answers||[]).forEach((answer)=>{
+        const answerCard=learningEl('div','learning-qa-answer');
+        answerCard.append(learningEl('strong','',(answer.isAdmin?'ADMIN · ':'')+answer.author),learningEl('p','',answer.body));
+        card.appendChild(answerCard);
+      });
+      const answerForm=document.createElement('form');answerForm.className='learning-qa-answer-form';
+      const answerText=document.createElement('textarea');answerText.className='learning-input learning-textarea';answerText.rows=2;answerText.maxLength=4000;answerText.placeholder='Javob yozing…';answerText.required=true;answerText.setAttribute('aria-label',question.title+' savoliga javob');
+      const answerButton=learningEl('button','learning-mini-btn','Javob');answerButton.type='submit';
+      answerForm.append(answerText,answerButton);
+      answerForm.addEventListener('submit',async(event)=>{
+        event.preventDefault();answerButton.disabled=true;
+        try{await invokeSecureAction('qa_answer',{questionId:question.id,bodyText:answerText.value.trim()});showToast('Javob yuborildi.');await refreshLearningDashboard();}
+        catch(error){showToast(error&&error.message?error.message:'Javob yuborilmadi.');answerButton.disabled=false;}
+      });
+      card.appendChild(answerForm);container.appendChild(card);
+    });
+  }
+
+  function renderLearningJournal(entries) {
+    const container=document.getElementById('learning-journal-list');container.replaceChildren();
+    const summary=document.getElementById('learning-journal-summary');
+    if(!entries.length){if(summary)summary.textContent='';addEmpty(container,'Hali bitim qayd etilmagan.');return;}
+    const wins=entries.filter(e=>e.outcome==='WIN').length;
+    const losses=entries.filter(e=>e.outcome==='LOSS').length;
+    if(summary)summary.textContent='Ko‘rsatilgan '+entries.length+' bitim · '+wins+' foyda · '+losses+' zarar';
+    entries.forEach((entry)=>{
+      const name=entry.symbol+' · '+(entry.direction==='LONG'?'BUY':'SELL');
+      const body='Kirish: '+entry.entry_price+
+        (entry.stop_loss?' · SL: '+entry.stop_loss:'')+
+        (entry.take_profit?' · TP: '+entry.take_profit:'')+
+        (entry.exit_price?' · Chiqish: '+entry.exit_price:'')+
+        '\nNatija: '+({WIN:'Foyda',LOSS:'Zarar',BE:'BE / 0',OPEN:'Ochiq'}[entry.outcome]||entry.outcome)+
+        (entry.setup?'\nStrategiya: '+entry.setup:'')+
+        (entry.notes?'\nIzoh: '+entry.notes:'');
+      const card=learningItem(name,new Date(entry.created_at).toLocaleString('uz-UZ'),body);
+      const actions=learningEl('div','learning-item-actions');
+      const del=learningEl('button','learning-mini-btn','O‘chirish');del.type='button';
+      del.addEventListener('click',async()=>{
+        const proceed=(ok)=>{if(ok)deleteLearningJournalEntry(entry.id,del);};
+        if(tg&&typeof tg.showConfirm==='function')tg.showConfirm('Bitim kundalikdan o‘chirilsinmi?',proceed);
+        else proceed(window.confirm('Bitim kundalikdan o‘chirilsinmi?'));
+      });
+      actions.appendChild(del);card.appendChild(actions);container.appendChild(card);
+    });
+  }
+
+  async function deleteLearningJournalEntry(id,button) {
+    if(button)button.disabled=true;
+    try{await invokeSecureAction('journal_delete',{questionId:id});await refreshLearningDashboard();showToast('Bitim o‘chirildi.');}
+    catch(error){showToast(error&&error.message?error.message:'Bitim o‘chirilmadi.');if(button)button.disabled=false;}
+  }
+
+  function renderLearningCertificates(certificates) {
+    const container=document.getElementById('learning-certificate-list');container.replaceChildren();
+    if(!certificates.length)addEmpty(container,'Hozircha sertifikat yo‘q.');
+    certificates.forEach((cert)=>{
+      const card=learningItem('BBSS SYSTEM · Kurs sertifikati',
+        new Date(cert.issued_at).toLocaleDateString('uz-UZ'),
+        'Tugallangan darslar: '+cert.completed_lessons+'/'+cert.total_lessons);
+      const code=learningEl('span','learning-certificate-code',cert.certificate_code);
+      const actions=learningEl('div','learning-item-actions');
+      const print=learningEl('button','learning-mini-btn','Sertifikatni chop etish / PDF');
+      print.type='button';print.addEventListener('click',()=>showPrintableCertificate(cert));
+      actions.append(print);card.append(code,actions);container.appendChild(card);
+    });
+  }
+
+  function showPrintableCertificate(cert) {
+    const preview=document.getElementById('learning-certificate-preview');
+    if(!preview)return;
+    preview.hidden=false;preview.replaceChildren();
+    preview.appendChild(learningEl('div','cert-brand','BBSS SYSTEM · TRADING EDUCATION'));
+    preview.appendChild(learningEl('h3','', 'SERTIFIKAT'));
+    preview.appendChild(learningEl('p','', (document.getElementById('profile-name')?.textContent||'BBSS SYSTEM o‘quvchisi')+' kurs dasturini muvaffaqiyatli tugatganini tasdiqlaydi.'));
+    preview.appendChild(learningEl('p','', 'Tugallangan darslar: '+cert.completed_lessons+'/'+cert.total_lessons));
+    preview.appendChild(learningEl('div','learning-certificate-code',cert.certificate_code));
+    preview.appendChild(learningEl('p','', 'Berilgan sana: '+new Date(cert.issued_at).toLocaleDateString('uz-UZ')));
+    const button=learningEl('button','learning-mini-btn','Chop etish / PDF saqlash');
+    button.type='button';button.addEventListener('click',()=>window.print());preview.appendChild(button);
+    preview.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  function renderLearningAdminStats(stats) {
+    const container=document.getElementById('learning-admin-stats-grid');container.replaceChildren();
+    const items=[
+      ['Faol studentlar',stats.activeStudents],
+      ['Kutilayotgan to‘lov',stats.pendingPayments],
+      ['Kirish so‘rovlari',stats.pendingAccessRequests],
+      ['Javobsiz savollar',stats.openQuestions],
+      ['Test urinishlari',stats.quizAttempts],
+      ['Kiritilgan bitimlar',stats.journalEntries],
+      ['Tugallangan darslar',stats.completedLessons]
+    ];
+    items.forEach(([label,value])=>{
+      const box=learningEl('div','learning-stat');box.append(learningEl('strong','',value),learningEl('span','',label));container.appendChild(box);
+    });
+  }
+
+  function initLearningTools() {
+    const saveButton=document.getElementById('learning-save-lesson-btn');
+    if(saveButton)saveButton.addEventListener('click',()=>{
+      const id=document.getElementById('learning-save-lesson-select')?.value;
+      if(!id){showToast('Avval darsni tanlang.');return;}
+      toggleSavedLesson(id,true);
+    });
+
+    const askForm=document.getElementById('learning-question-form');
+    if(askForm)askForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const title=document.getElementById('learning-question-title').value.trim();
+      const bodyText=document.getElementById('learning-question-body').value.trim();
+      const lessonId=document.getElementById('learning-question-lesson').value;
+      const note=document.getElementById('learning-question-note');
+      const button=askForm.querySelector('button[type="submit"]');button.disabled=true;
+      try{await invokeSecureAction('qa_question_create',{title,bodyText,lessonId:lessonId||undefined});askForm.reset();if(note)note.textContent='Savolingiz joylandi.';await refreshLearningDashboard();}
+      catch(error){if(note)note.textContent=error&&error.message?error.message:'Savol yuborilmadi.';}
+      finally{button.disabled=false;}
+    });
+
+    const journalForm=document.getElementById('learning-journal-form');
+    if(journalForm)journalForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const button=journalForm.querySelector('button[type="submit"]');button.disabled=true;
+      const value=(id)=>document.getElementById(id).value;
+      const note=document.getElementById('learning-journal-note');
+      try{
+        await invokeSecureAction('journal_add',{
+          symbol:value('journal-symbol'),direction:value('journal-direction'),
+          entryPrice:value('journal-entry'),stopLoss:value('journal-stop')||null,
+          takeProfit:value('journal-target')||null,exitPrice:value('journal-exit')||null,
+          outcome:value('journal-outcome'),setup:value('journal-setup'),notes:value('journal-notes')
+        });
+        journalForm.reset();if(note)note.textContent='Bitim saqlandi.';await refreshLearningDashboard();
+      }catch(error){if(note)note.textContent=error&&error.message?error.message:'Bitim saqlanmadi.';}
+      finally{button.disabled=false;}
+    });
+
+    const announcementForm=document.getElementById('learning-announcement-form');
+    if(announcementForm)announcementForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();const button=announcementForm.querySelector('button[type="submit"]');button.disabled=true;
+      const note=document.getElementById('learning-announcement-note');
+      try{
+        await invokeSecureAction('announcement_admin_create',{
+          title:document.getElementById('learning-announcement-title').value.trim(),
+          bodyText:document.getElementById('learning-announcement-body').value.trim(),
+          saved:document.getElementById('learning-announcement-pin').checked
+        });
+        announcementForm.reset();if(note)note.textContent='E’lon joylandi.';await refreshLearningDashboard();
+      }catch(error){if(note)note.textContent=error&&error.message?error.message:'E’lon joylanmadi.';}
+      finally{button.disabled=false;}
+    });
+
+    const quizForm=document.getElementById('learning-quiz-form');
+    if(quizForm)quizForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();const button=quizForm.querySelector('button[type="submit"]');button.disabled=true;
+      const note=document.getElementById('learning-quiz-note');
+      try{
+        const lines=document.getElementById('learning-quiz-questions').value.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+        const questions=lines.map((line)=>{
+          const parts=line.split('|').map(part=>part.trim());
+          if(parts.length<4)throw new Error('Har bir savolda kamida 2 ta javob varianti va to‘g‘ri variant raqami bo‘lsin.');
+          const correctNumber=Number(parts[parts.length-1]);
+          const options=parts.slice(1,-1);
+          if(!Number.isInteger(correctNumber)||correctNumber<1||correctNumber>options.length)throw new Error('To‘g‘ri variant raqami noto‘g‘ri: '+line);
+          return {question:parts[0],options,correctIndex:correctNumber-1};
+        });
+        await invokeSecureAction('quiz_admin_create',{
+          title:document.getElementById('learning-quiz-title').value.trim(),
+          description:document.getElementById('learning-quiz-description').value.trim(),
+          passPercent:Number(document.getElementById('learning-quiz-pass').value)||70,
+          questions
+        });
+        quizForm.reset();document.getElementById('learning-quiz-pass').value='70';
+        if(note)note.textContent='Test yaratildi va studentlarga ochildi.';await refreshLearningDashboard();
+      }catch(error){if(note)note.textContent=error&&error.message?error.message:'Test yaratilmadi.';}
+      finally{button.disabled=false;}
+    });
+
+    const certificateButton=document.getElementById('learning-certificate-btn');
+    if(certificateButton)certificateButton.addEventListener('click',async()=>{
+      certificateButton.disabled=true;
+      try{
+        const result=await invokeSecureAction('certificate_issue');
+        const cert=result.certificate;
+        showToast('Sertifikat tayyor!');
+        await refreshLearningDashboard();
+        if(cert)showPrintableCertificate(cert);
+      }catch(error){showToast(error&&error.message?error.message:'Sertifikat tayyorlanmadi.');}
+      finally{certificateButton.disabled=false;}
+    });
+  }
 
   const SETTINGS_STORAGE_KEY = 'bbss-system-settings-v1';
   const DEFAULT_APP_SETTINGS = Object.freeze({
@@ -1780,10 +2368,12 @@
 
   function updateChatAvailability() {
     const button = document.getElementById('nav-chat-btn');
-    if (!button) return;
+    const toolsButton = document.getElementById('nav-tools-btn');
     const canChat = isAdminPreview || (!!loadedCourse && !accessRequired);
-    button.hidden = !canChat;
-    if (!canChat && document.getElementById('chat-screen')?.classList.contains('active')) {
+    if (button) button.hidden = !canChat;
+    if (toolsButton) toolsButton.hidden = !canChat;
+    if (!canChat && (document.getElementById('chat-screen')?.classList.contains('active') ||
+        document.getElementById('tools-screen')?.classList.contains('active'))) {
       showScreen('home');
     }
   }
@@ -2169,6 +2759,7 @@
   bindChatComposer('direct');
 
   initSettings();
+  initLearningTools();
 
   loadCourseCatalog();
 
