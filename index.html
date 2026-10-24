@@ -759,11 +759,65 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
     : null;
 
+
+  // iOS-style Liquid Glass pill that follows the selected bottom navigation item.
+  function syncNavGlassIndicator(animate = true) {
+    const nav = document.querySelector('.bottom-nav .nav-inner');
+    if (!nav) return;
+    let glass = nav.querySelector('.nav-glass-indicator');
+    if (!glass) {
+      glass = document.createElement('span');
+      glass.className = 'nav-glass-indicator';
+      glass.setAttribute('aria-hidden', 'true');
+      nav.prepend(glass);
+    }
+    const buttons = Array.from(nav.querySelectorAll('.nav-btn'));
+    const target = buttons.find((button) =>
+      button.classList.contains('active') &&
+      !button.hidden &&
+      button.getClientRects().length > 0 &&
+      getComputedStyle(button).display !== 'none'
+    );
+    if (!target) {
+      glass.style.opacity = '0';
+      return;
+    }
+    const navRect = nav.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const nextScreen = target.dataset.screen || '';
+    const changed = glass.dataset.screen !== nextScreen;
+    glass.style.setProperty('--glass-x', (targetRect.left - navRect.left + 1) + 'px');
+    glass.style.width = Math.max(0, targetRect.width - 2) + 'px';
+    glass.style.top = Math.max(0, targetRect.top - navRect.top + 1) + 'px';
+    glass.style.height = Math.max(0, targetRect.height - 2) + 'px';
+    glass.style.bottom = 'auto';
+    glass.style.opacity = '1';
+    if (changed && animate) {
+      glass.dataset.screen = nextScreen;
+      glass.classList.remove('is-settling');
+      void glass.offsetWidth;
+      glass.classList.add('is-settling');
+    } else {
+      glass.dataset.screen = nextScreen;
+    }
+  }
+  window.addEventListener('resize', () => requestAnimationFrame(() => syncNavGlassIndicator(false)), {passive:true});
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => requestAnimationFrame(() => syncNavGlassIndicator(false)), {passive:true});
+  }
+  const navGlassObserver = new MutationObserver(() => requestAnimationFrame(() => syncNavGlassIndicator(false)));
+  const bottomNavForObserver = document.querySelector('.bottom-nav .nav-inner');
+  if (bottomNavForObserver) navGlassObserver.observe(bottomNavForObserver, {
+    attributes: true, subtree: true, attributeFilter: ['class', 'hidden']
+  });
+  requestAnimationFrame(() => syncNavGlassIndicator(false));
+
   function showScreen(screen) {
     if (screen !== 'chat') document.body.classList.remove('chat-fullscreen-mode');
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById(screen+'-screen').classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.screen===screen));
+    requestAnimationFrame(() => syncNavGlassIndicator(true));
     window.scrollTo({top:0, behavior:'smooth'});
     if (screen === 'profile' && isAdminPreview) {
       loadAdminEnrollments();
