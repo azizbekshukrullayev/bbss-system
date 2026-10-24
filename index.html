@@ -25,17 +25,24 @@
     #admin-tools.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
     #admin-tools[hidden]{display:none!important}
 
-    .admin-enrollment-list{display:grid;gap:10px;margin-top:12px}
-    .admin-enrollment-item{border:1px solid var(--line);background:#111113;border-radius:13px;padding:12px}
-    .admin-enrollment-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .admin-enrollment-identity{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-    .admin-enrollment-avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#272318;color:var(--gold);font-size:15px;font-weight:800;border:1px solid #5b4a23}
+    /* Ixcham: bitta qatorli o'quvchi ro'yxati va ochiladigan amallar */
+    .admin-enrollment-list{display:grid;gap:6px;margin-top:10px}
+    .admin-enrollment-item{border:1px solid var(--line);background:#111113;border-radius:11px;padding:7px 9px;min-width:0}
+    .admin-enrollment-head{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0}
+    .admin-enrollment-identity{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+    .admin-enrollment-avatar{width:31px;height:31px;flex:0 0 31px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#272318;color:var(--gold);font-size:12px;font-weight:800;border:1px solid #5b4a23}
     .admin-enrollment-avatar img{width:100%;height:100%;display:block;object-fit:cover}
-    .avatar img,.big-avatar img{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
-    .admin-enrollment-name{font-size:13px;font-weight:800;overflow-wrap:anywhere}
-    .admin-enrollment-meta{color:var(--muted);font-size:11px;line-height:1.5;margin-top:5px;overflow-wrap:anywhere}
-    .admin-revoke-btn{width:100%;margin-top:10px;border:1px solid #7c3434;background:#281516;color:#ffb4b4;border-radius:10px;padding:10px 12px;font-weight:750}
+    .admin-enrollment-userline{display:flex;align-items:center;gap:7px;min-width:0;flex:1;white-space:nowrap;overflow:hidden}
+    .admin-enrollment-name{font-size:12px;font-weight:800;min-width:0;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .admin-enrollment-id{color:var(--muted);font-size:10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .admin-enrollment-toggle{width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;padding:0;border:1px solid #39393b;border-radius:8px;background:#1c1c1e;color:#c9c9ca;font-size:15px;line-height:1}
+    .admin-enrollment-toggle[aria-expanded="true"]{color:var(--gold2);border-color:#554824;background:#211d13}
+    .admin-enrollment-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0 0 39px;padding-top:7px;border-top:1px solid #29292b}
+    .admin-enrollment-actions[hidden]{display:none!important}
+    .admin-enrollment-date{font-size:10px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+    .admin-revoke-btn{width:auto;max-width:100%;flex:0 0 auto;margin:0;border:1px solid #7c3434;background:#281516;color:#ffb4b4;border-radius:8px;padding:6px 9px;font-size:11px;line-height:1.2;font-weight:750}
     .admin-revoke-btn:disabled{opacity:.5;cursor:wait}
+    @media(max-width:380px){.admin-enrollment-item{padding:6px 7px}.admin-enrollment-identity{gap:6px}.admin-enrollment-userline{gap:5px}.admin-enrollment-name{font-size:11px;max-width:43%}.admin-enrollment-id{font-size:9px}.admin-enrollment-avatar{width:29px;height:29px;flex-basis:29px}.admin-enrollment-actions{margin-left:35px}.admin-enrollment-date{font-size:9px}}
     #admin-enrollments-panel.admin-visible{display:block!important;visibility:visible!important;opacity:1!important;position:relative;z-index:2}
     #admin-enrollments-panel[hidden]{display:none!important}
 
@@ -389,40 +396,92 @@
     const container = document.getElementById('admin-enrollments-list');
     if (!container) return;
     container.replaceChildren();
+
     if (!Array.isArray(enrollments) || enrollments.length === 0) {
       addEmpty(container, 'Hozircha faol ruxsat berilgan o‘quvchilar yo‘q.');
       return;
     }
+
     enrollments.forEach((student) => {
+      const telegramId = String(student.telegramId || '');
+      const username = student.username
+        ? '@' + String(student.username).replace(/^@/, '')
+        : (student.displayName || 'O‘quvchi');
+      const initial = String(username).replace(/^@/, '').slice(0, 1).toUpperCase() || 'B';
+
       const card = document.createElement('article');
       card.className = 'admin-enrollment-item';
+
       const head = document.createElement('div');
       head.className = 'admin-enrollment-head';
+
       const identity = document.createElement('div');
       identity.className = 'admin-enrollment-identity';
+
       const avatar = document.createElement('div');
       avatar.className = 'admin-enrollment-avatar';
-      const initialSource = student.displayName || student.username || String(student.telegramId || 'B');
-      const initial = String(initialSource).replace(/^@/, '').slice(0, 1).toUpperCase() || 'B';
       setAvatarPhoto(avatar, student.photoUrl, initial);
+
+      const userline = document.createElement('div');
+      userline.className = 'admin-enrollment-userline';
+
       const name = document.createElement('div');
       name.className = 'admin-enrollment-name';
-      name.textContent = student.displayName || ('Telegram ID ' + student.telegramId);
-      identity.append(avatar, name);
-      const badge = document.createElement('span');
-      badge.className = 'pill';
-      badge.textContent = 'Faol';
-      head.append(identity, badge);
-      const meta = document.createElement('div');
-      meta.className = 'admin-enrollment-meta';
-      meta.textContent = `Telegram ID: ${student.telegramId}${student.username ? ' · @' + student.username.replace(/^@/, '') : ''}\nRuxsat berilgan: ${formatAccessDate(student.grantedAt)}`;
-      meta.style.whiteSpace = 'pre-line';
+      name.textContent = username;
+      name.title = username;
+
+      const id = document.createElement('div');
+      id.className = 'admin-enrollment-id';
+      id.textContent = `ID: ${telegramId}`;
+      id.title = `Telegram ID: ${telegramId}`;
+
+      userline.append(name, id);
+      identity.append(avatar, userline);
+
+      const toggle = document.createElement('button');
+      toggle.className = 'admin-enrollment-toggle';
+      toggle.type = 'button';
+      toggle.textContent = '⌄';
+      toggle.setAttribute('aria-label', `O‘quvchi ${username} amallarini ko‘rsatish`);
+      toggle.setAttribute('aria-expanded', 'false');
+
+      head.append(identity, toggle);
+
+      const actions = document.createElement('div');
+      actions.className = 'admin-enrollment-actions';
+      actions.hidden = true;
+
+      const grantedDate = document.createElement('div');
+      grantedDate.className = 'admin-enrollment-date';
+      grantedDate.textContent = `Ruxsat: ${formatAccessDate(student.grantedAt)}`;
+
       const revoke = document.createElement('button');
       revoke.className = 'admin-revoke-btn';
       revoke.type = 'button';
-      revoke.textContent = 'Ruxsatni bekor qilish';
-      revoke.addEventListener('click', () => confirmRevokeAccess(String(student.telegramId), student.displayName || String(student.telegramId), revoke));
-      card.append(head, meta, revoke);
+      revoke.textContent = 'Ruxsatni olib tashlash';
+      revoke.addEventListener('click', () => {
+        confirmRevokeAccess(
+          telegramId,
+          student.displayName || username || telegramId,
+          revoke,
+        );
+      });
+
+      actions.append(grantedDate, revoke);
+      toggle.addEventListener('click', () => {
+        const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!isOpen));
+        toggle.textContent = isOpen ? '⌄' : '⌃';
+        toggle.setAttribute(
+          'aria-label',
+          isOpen
+            ? `O‘quvchi ${username} amallarini ko‘rsatish`
+            : `O‘quvchi ${username} amallarini yashirish`,
+        );
+        actions.hidden = isOpen;
+      });
+
+      card.append(head, actions);
       container.appendChild(card);
     });
   }
