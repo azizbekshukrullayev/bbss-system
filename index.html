@@ -639,12 +639,13 @@
     const profileAvatar = document.getElementById('profile-avatar');
     if (avatar && profileAvatar) {
       avatar.replaceChildren();
-      const image = profileAvatar.querySelector('img');
-      if (image && image.src) {
-        const copy = document.createElement('img');
-        copy.src = image.src;
-        copy.alt = '';
-        avatar.appendChild(copy);
+      avatar.style.backgroundImage = 'none';
+      const backgroundImage = profileAvatar.style.backgroundImage;
+      if (backgroundImage && backgroundImage !== 'none') {
+        avatar.style.backgroundImage = backgroundImage;
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.textContent = '';
       } else {
         avatar.textContent = (name.trim().slice(0, 1) || 'B').toUpperCase();
       }
