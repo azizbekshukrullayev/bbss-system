@@ -26,7 +26,25 @@
     .big-avatar{flex:0 0 66px;isolation:isolate}
     .avatar{flex:0 0 38px;isolation:isolate}
 
-    .profile-photo-input{display:none}.profile-photo-inline{display:flex;flex-direction:column;align-items:center;gap:5px;margin:6px 0 14px}.profile-photo-button{width:auto;max-width:100%;margin:0;padding:7px 12px;border:1px solid #554824;border-radius:999px;background:#1b1913;color:var(--gold2);font-size:11px;line-height:1.25;font-weight:750}.profile-photo-button:disabled{opacity:.55;cursor:wait}.profile-photo-note{max-width:250px;color:var(--muted);font-size:10px;line-height:1.35;text-align:center}.empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13px}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,16,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:9px 10px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:5}.nav-inner{width:100%;max-width:560px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.nav-btn{border:0;background:transparent;color:var(--muted);padding:8px 5px;border-radius:11px;font-size:10px}.nav-btn b{display:block;font-size:18px;font-weight:500;margin-bottom:2px}.nav-btn.active{color:var(--gold);background:#211d13}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);width:max-content;max-width:90%;background:#f4f0e4;color:#15130d;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:650;box-shadow:0 8px 30px #0008;display:none;z-index:9}.smallprint{font-size:10px;color:#777;margin:16px 3px 0}
+    .profile-photo-input{display:none}.profile-photo-inline{display:flex;flex-direction:column;align-items:center;gap:5px;margin:6px 0 14px}.profile-photo-button{width:auto;max-width:100%;margin:0;padding:7px 12px;border:1px solid #554824;border-radius:999px;background:#1b1913;color:var(--gold2);font-size:11px;line-height:1.25;font-weight:750}.profile-photo-button:disabled{opacity:.55;cursor:wait}.profile-photo-note{max-width:250px;color:var(--muted);font-size:10px;line-height:1.35;text-align:center}.empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13px}.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,15,16,.96);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:9px 10px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:5}.nav-inner{width:100%;max-width:560px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.nav-btn{border:0;background:transparent;color:var(--muted);padding:8px 3px;border-radius:11px;font-size:10px;min-width:0}.nav-btn b{display:block;font-size:18px;font-weight:500;margin-bottom:2px}.nav-btn.active{color:var(--gold);background:#211d13}
+    .nav-btn[hidden]{display:none!important}
+    .community-chat{display:flex;flex-direction:column;min-height:55vh;max-height:calc(100dvh - 238px);border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden}
+    .community-chat-messages{flex:1;min-height:250px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;padding:10px}
+    .community-chat-message{align-self:flex-start;max-width:96%;min-width:120px;border:1px solid #303033;border-radius:12px 12px 12px 4px;background:#1b1b1d;padding:8px 10px}
+    .community-chat-message.is-own{align-self:flex-end;border-color:#594a26;background:#242014;border-radius:12px 12px 4px 12px}
+    .community-chat-message.is-deleted{opacity:.65;border-style:dashed}
+    .community-chat-message-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+    .community-chat-author{font-size:11px;font-weight:800;color:var(--gold2);overflow-wrap:anywhere}
+    .community-chat-time{font-size:9px;color:var(--muted);white-space:nowrap}
+    .community-chat-text{font-size:13px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+    .community-chat-delete{border:0;background:transparent;color:#ffb4b4;padding:2px 4px;font-size:12px;margin-left:4px}
+    .community-chat-form{display:flex;align-items:flex-end;gap:7px;padding:9px;border-top:1px solid var(--line);background:#101011}
+    .community-chat-input{flex:1;min-width:0;max-height:120px;min-height:42px;resize:vertical;border:1px solid #3e3e40;border-radius:11px;padding:10px;background:#18181a;color:var(--text);font:inherit;font-size:13px;line-height:1.35;outline:none}
+    .community-chat-input:focus{border-color:var(--gold)}
+    .community-chat-send{width:auto;flex:0 0 auto;margin:0;padding:10px 12px;border-radius:11px}
+    .community-chat-footnote{padding:0 10px 9px;color:var(--muted);font-size:10px;background:#101011}
+    @media(max-width:380px){.nav-btn{font-size:9px;padding:7px 2px}.community-chat{max-height:calc(100dvh - 220px)}.community-chat-messages{padding:8px}.community-chat-message{max-width:99%;padding:7px 8px}}
+    .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);width:max-content;max-width:90%;background:#f4f0e4;color:#15130d;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:650;box-shadow:0 8px 30px #0008;display:none;z-index:9}.smallprint{font-size:10px;color:#777;margin:16px 3px 0}
     .admin-label{display:block;margin:14px 0 7px;color:var(--gold2);font-size:12px;font-weight:700}
     .admin-input{display:block;width:100%;padding:13px 12px;border:1px solid #51462a;border-radius:11px;background:#0f0f10;color:var(--text);font:inherit;outline:none}
     .admin-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px #d6b45d22}
@@ -129,6 +147,19 @@
     <div class="note" id="lesson-note">Video darslar faqat Telegram orqali va ruxsat tekshiruvidan keyin ochiladi.</div>
   </main>
 
+  <main id="chat-screen" class="screen">
+    <div class="section-head"><h3>O‘quvchilar chati</h3><span class="subtle" id="community-chat-status">Yuklanmoqda…</span></div>
+    <div class="note" style="margin-bottom:12px">BBSS SYSTEM o‘quvchilari bilan fikr almashing. Hurmat bilan yozing; admin nomaqbul xabarlarni olib tashlashi mumkin.</div>
+    <section class="community-chat" aria-label="O‘quvchilar umumiy chati">
+      <div class="community-chat-messages" id="community-chat-messages" aria-live="polite"><div class="empty">Xabarlar yuklanmoqda…</div></div>
+      <form class="community-chat-form" id="community-chat-form">
+        <textarea class="community-chat-input" id="community-chat-input" maxlength="1200" rows="2" placeholder="Fikringizni yozing…" aria-label="Chat xabari" required></textarea>
+        <button class="primary community-chat-send" id="community-chat-send" type="submit">Yuborish</button>
+      </form>
+      <div class="community-chat-footnote">Maksimal 1200 belgi · Xabarlar avtomatik yangilanadi</div>
+    </section>
+  </main>
+
   <main id="profile-screen" class="screen">
     <div class="section-head"><h3>Mening profilim</h3><span class="subtle">O‘quvchi kabineti</span></div>
     <section class="profile-box">
@@ -171,7 +202,7 @@
   </main>
   <p class="smallprint">© BBSS SYSTEM · Darslarga kirish serverda tekshiriladi.</p>
 </div>
-<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button></div></nav>
+<nav class="bottom-nav"><div class="nav-inner"><button class="nav-btn active" data-screen="home" onclick="showScreen('home')"><b>⌂</b>Bosh sahifa</button><button class="nav-btn" data-screen="lessons" onclick="showScreen('lessons')"><b>▤</b>Darslar</button><button class="nav-btn" id="nav-chat-btn" data-screen="chat" onclick="showScreen('chat')" hidden><b>☷</b>Chat</button><button class="nav-btn" data-screen="profile" onclick="showScreen('profile')"><b>◉</b>Profil</button></div></nav>
 <div class="toast" id="toast"></div>
 <script>
   function safeTelegramPhotoUrl(value) {
@@ -341,6 +372,7 @@
       loadAdminEnrollments();
       loadAdminAccessRequests();
     }
+    if (screen === 'chat') loadCommunityMessages(false);
   }
   let toastTimer;
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800)}
@@ -790,6 +822,16 @@
     }
   }
 
+  function updateChatAvailability() {
+    const button = document.getElementById('nav-chat-btn');
+    if (!button) return;
+    const canChat = isAdminPreview || (!!loadedCourse && !accessRequired);
+    button.hidden = !canChat;
+    if (!canChat && document.getElementById('chat-screen')?.classList.contains('active')) {
+      showScreen('home');
+    }
+  }
+
   function updateAccessRequestUI(status) {
     accessRequestStatus = status || null;
     const panel = document.getElementById('access-request-panel');
@@ -881,6 +923,7 @@
     if (activeModuleCount) activeModuleCount.textContent = `${modules.length} / ${Math.max(3, modules.length)}`;
     loadedCourse = course;
     loadedModules = modules;
+    updateChatAvailability();
     document.getElementById('db-status').textContent = 'Bazaga ulandi';
     if (!course) {
       const activeModuleCount = document.getElementById('active-module-count');
