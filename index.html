@@ -664,7 +664,9 @@
 
   function chatIsViewActive(id) {
     const el = document.getElementById(id);
-    return !!el && !el.hidden && el.classList.contains('active');
+    const chatScreen = document.getElementById('chat-screen');
+    return !!el && !!chatScreen && chatScreen.classList.contains('active') &&
+      !el.hidden && el.classList.contains('active');
   }
 
   function showChatHub() {
