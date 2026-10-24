@@ -735,6 +735,9 @@
     loadChatDirectory(false);
   }
 
+  let chatDirectoryLastPhotoRefreshAt = 0;
+  const CHAT_DIRECTORY_PHOTO_REFRESH_MS = 50 * 60 * 1000;
+
   async function loadChatDirectory(silent = false) {
     if (chatDirectoryLoading || !chatIsViewActive('chat-hub-view')) return;
     chatDirectoryLoading = true;
@@ -743,10 +746,14 @@
     if (refresh) refresh.disabled = true;
     if (status && !silent) status.textContent = 'Yuklanmoqda…';
 
+    // O‘qilmagan soni tez yangilanadi, lekin avatar imzolangan URL’lari faqat zarur bo‘lganda so‘raladi.
+    const includePhotos = !silent || !chatDirectoryLastPhotoRefreshAt ||
+      (Date.now() - chatDirectoryLastPhotoRefreshAt) >= CHAT_DIRECTORY_PHOTO_REFRESH_MS;
     try {
-      const data = await invokeSecureAction('direct_chat_directory');
+      const data = await invokeSecureAction('direct_chat_directory', { includePhotos });
       const students = Array.isArray(data.students) ? data.students : [];
       renderChatDirectory(students);
+      if (includePhotos) chatDirectoryLastPhotoRefreshAt = Date.now();
       if (status) status.textContent = students.length ? students.length + ' student' : 'Hozircha student yo‘q';
     } catch (error) {
       if (status) status.textContent = 'Xatolik';
@@ -819,65 +826,140 @@
     closeButton.focus({ preventScroll: true });
   }
 
+  function chatAvatarPhotoIdentity(photoUrl) {
+    const safeUrl = safeTelegramPhotoUrl(photoUrl);
+    if (!safeUrl) return '';
+    try {
+      const parsed = new URL(safeUrl);
+      // Signed URL tokeni har yangilanishda almashadi; rasm obyektining yo‘li esa o‘zgarmaydi.
+      return parsed.origin + parsed.pathname;
+    } catch (_) {
+      return '';
+    }
+  }
+
   function renderChatDirectory(students) {
     const container = document.getElementById('direct-chat-people');
     if (!container) return;
-    container.replaceChildren();
-    if (!Array.isArray(students) || students.length === 0) {
-      addEmpty(container, 'Boshqa faol studentlar hozircha yo‘q.');
+
+    const list = Array.isArray(students) ? students : [];
+    if (!list.length) {
+      if (!container.querySelector('.empty') || container.querySelector('.chat-person-row')) {
+        addEmpty(container, 'Boshqa faol studentlar hozircha yo‘q.');
+      }
       return;
     }
 
-    students.forEach((student) => {
+    // Mavjud qatorlarni saqlaymiz: oddiy polling avatar elementlarini qayta yaratmasin.
+    const rowById = new Map();
+    container.querySelectorAll('.chat-person-row').forEach((row) => {
+      const key = row.dataset.studentId || '';
+      if (key) rowById.set(key, row);
+    });
+    container.querySelectorAll(':scope > :not(.chat-person-row)').forEach((el) => el.remove());
+
+    const wantedIds = new Set(list.map((student) => String(student.telegramId || '')).filter(Boolean));
+    for (const [id, row] of rowById) {
+      if (!wantedIds.has(id)) {
+        row.remove();
+        rowById.delete(id);
+      }
+    }
+
+    list.forEach((student, index) => {
       const id = String(student.telegramId || '');
+      if (!id) return;
       const name = String(student.displayName || 'BBSS o‘quvchisi');
       const username = student.username ? '@' + String(student.username).replace(/^@/, '') : 'BBSS student';
-      const row = document.createElement('button');
-      row.type = 'button';
-      row.className = 'chat-person-row';
-      row.setAttribute('aria-label', 'Shaxsiy chatni ochish: ' + name);
-
       const initial = name.trim().slice(0, 1).toUpperCase() || 'B';
-      const avatar = document.createElement('span');
-      avatar.className = 'chat-person-avatar';
-      avatar.setAttribute('role', 'button');
-      avatar.setAttribute('tabindex', '0');
-      avatar.setAttribute('aria-label', name + ' avatarini kattalashtirish');
-      setAvatarPhoto(avatar, student.photoUrl || null, initial);
+      let row = rowById.get(id);
+      let avatar;
+      let title;
+      let handle;
+      let unreadBadge;
 
-      const enlargeAvatar = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openChatAvatar(student.photoUrl || null, name, initial);
-      };
-      avatar.addEventListener('click', enlargeAvatar);
-      avatar.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') enlargeAvatar(event);
-      });
+      if (!row) {
+        row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'chat-person-row';
+        row.dataset.studentId = id;
 
-      const copy = document.createElement('span');
-      copy.className = 'chat-person-copy';
-      const title = document.createElement('strong');
-      title.textContent = name;
-      const handle = document.createElement('small');
-      handle.textContent = username;
-      copy.append(title, handle);
+        avatar = document.createElement('span');
+        avatar.className = 'chat-person-avatar';
+        avatar.setAttribute('role', 'button');
+        avatar.setAttribute('tabindex', '0');
+
+        const enlargeAvatar = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openChatAvatar(
+            avatar.dataset.photoUrl || null,
+            avatar.dataset.displayName || 'Student',
+            avatar.dataset.initial || 'B',
+          );
+        };
+        avatar.addEventListener('click', enlargeAvatar);
+        avatar.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') enlargeAvatar(event);
+        });
+
+        const copy = document.createElement('span');
+        copy.className = 'chat-person-copy';
+        title = document.createElement('strong');
+        handle = document.createElement('small');
+        copy.append(title, handle);
+
+        unreadBadge = document.createElement('span');
+        unreadBadge.className = 'chat-person-unread';
+
+        const arrow = document.createElement('span');
+        arrow.className = 'chat-entry-arrow';
+        arrow.textContent = '›';
+        row.append(avatar, copy, unreadBadge, arrow);
+        rowById.set(id, row);
+      } else {
+        avatar = row.querySelector('.chat-person-avatar');
+        title = row.querySelector('.chat-person-copy strong');
+        handle = row.querySelector('.chat-person-copy small');
+        unreadBadge = row.querySelector('.chat-person-unread');
+      }
+
+      row.setAttribute('aria-label', 'Shaxsiy chatni ochish: ' + name);
+      row.onclick = () => openDirectChat(id, name, student.username || '');
+      if (title) title.textContent = name;
+      if (handle) handle.textContent = username;
+
+      if (avatar) {
+        avatar.setAttribute('aria-label', name + ' avatarini kattalashtirish');
+        avatar.dataset.displayName = name;
+        avatar.dataset.initial = initial;
+
+        // Pollingda foto URL qayta imzolanishi mumkin. Bir xil obyekt bo‘lsa
+        // background-image o‘zgartirilmaydi, shuning uchun rasm qayta yuklanmaydi.
+        if (Object.prototype.hasOwnProperty.call(student, 'photoUrl')) {
+          const photoUrl = student.photoUrl || '';
+          const nextPhotoKey = chatAvatarPhotoIdentity(photoUrl);
+          const previousPhotoKey = avatar.dataset.photoKey || '';
+          avatar.dataset.photoUrl = photoUrl;
+          if (nextPhotoKey !== previousPhotoKey) {
+            setAvatarPhoto(avatar, photoUrl || null, initial);
+            avatar.dataset.photoKey = nextPhotoKey;
+          }
+        }
+      }
 
       const unreadCount = Math.max(0, Number(student.unreadCount) || 0);
-      const unreadBadge = document.createElement('span');
-      unreadBadge.className = 'chat-person-unread';
-      unreadBadge.hidden = unreadCount === 0;
-      unreadBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+      if (unreadBadge) {
+        unreadBadge.hidden = unreadCount === 0;
+        unreadBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+      }
       if (unreadCount > 0) {
         row.setAttribute('aria-label', 'Shaxsiy chatni ochish: ' + name + '. ' + unreadCount + ' ta o‘qilmagan xabar');
       }
 
-      const arrow = document.createElement('span');
-      arrow.className = 'chat-entry-arrow';
-      arrow.textContent = '›';
-      row.append(avatar, copy, unreadBadge, arrow);
-      row.addEventListener('click', () => openDirectChat(id, name, student.username || ''));
-      container.append(row);
+      // Qator tartibi o‘zgarmagan bo‘lsa DOM’ga tegmaymiz.
+      const expectedAtIndex = container.children[index] || null;
+      if (expectedAtIndex !== row) container.insertBefore(row, expectedAtIndex);
     });
   }
 
