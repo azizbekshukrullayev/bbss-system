@@ -278,6 +278,36 @@
       <p>Tradingni tizimli o‘rganish uchun maxsus ta’lim maydoni.</p>
       <div class="hero-foot"><span class="mini-tag">XAUUSD · EURUSD</span><span class="ghost-chart">↗ ━ ↘ ━ ↗</span></div>
     </section>
+    <section class="home-dashboard" id="home-dashboard-panel" hidden aria-live="polite">
+      <div class="home-dashboard-head">
+        <div><div class="home-dashboard-overline">STUDENT TERMINAL / BBSS</div><h3>O‘rganish yo‘lingiz</h3></div>
+        <span class="home-dashboard-status" id="home-dashboard-status">KURS TAYYOR</span>
+      </div>
+      <div class="home-dashboard-grid">
+        <div class="home-metric-card home-progress-metric">
+          <div class="home-metric-label">Kurs progressi</div>
+          <div class="home-metric-value-row"><strong id="home-progress-percent">0%</strong><span id="home-progress-completed">0 / 0 dars</span></div>
+          <div class="home-progress-track"><span id="home-progress-bar"></span></div>
+          <div class="home-metric-foot" id="home-progress-foot">Darslar tugallangani sari yangilanadi</div>
+        </div>
+        <div class="home-metric-card">
+          <div class="home-metric-label">O‘quv dasturi</div>
+          <div class="home-metric-value-row"><strong id="home-total-lessons">0</strong><span id="home-total-modules">0 modul</span></div>
+          <div class="home-metric-foot" id="home-total-foot">Darslar kurs katalogidan olinadi</div>
+          <div class="home-metric-signal"><span></span> DASTUR HOLATI</div>
+        </div>
+      </div>
+      <button class="home-resume-card" id="home-resume-btn" type="button" onclick="continueLearning()" disabled>
+        <span class="home-resume-icon" aria-hidden="true">▷</span>
+        <span class="home-resume-copy"><span class="home-resume-kicker" id="home-resume-kicker">DAVOM ETTIRISH</span><strong id="home-resume-title">Darslar yuklanmoqda…</strong><small id="home-resume-meta">Kurs darslari tayyorlanmoqda</small></span>
+        <span class="home-resume-arrow" aria-hidden="true">↗</span>
+      </button>
+      <div class="home-quick-actions">
+        <button type="button" onclick="showScreen('lessons')"><span aria-hidden="true">▤</span>Kurslar</button>
+        <button type="button" id="home-open-tools" onclick="showScreen('tools')" hidden><span aria-hidden="true">⌁</span>Amaliyot</button>
+        <button type="button" id="home-open-community" onclick="showScreen('chat')" hidden><span aria-hidden="true">◌</span>Community</button>
+      </div>
+    </section>
     <section class="course-card admin-tools" id="admin-tools" hidden aria-hidden="true" aria-live="polite">
       <div class="course-label">ADMIN BOSHQARUVI</div>
       <h4>O‘quvchiga kursga ruxsat berish</h4>
@@ -290,7 +320,7 @@
       <div class="note" id="configure-bot-webhook-note" aria-live="polite">Bir marta sozlang. Shundan keyin bot /buy va chek xabarlarini qabul qiladi.</div>
     </section>
 
-    <div class="section-head"><h3>Mening kursim</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
+    <div class="section-head"><h3>Kurs ma’lumoti</h3><span class="subtle" id="db-status" aria-live="polite">Bazaga ulanmoqda…</span></div>
     <section class="course-card">
       <div class="course-top"><div><div class="course-label">ASOSIY DASTUR</div><h4 id="course-title">BBSS Trading Course</h4><p id="course-description">Supabase’dan ma’lumot olinmoqda…</p></div><span class="pill" id="module-count">— modul</span></div>
       <button class="primary" id="open-course-btn" onclick="showScreen('lessons')">Kursni ko‘rish&nbsp; →</button>
@@ -307,8 +337,22 @@
   </main>
 
   <main id="lessons-screen" class="screen">
-    <div class="section-head"><h3>Kurs modullari</h3><span class="subtle">BBSS SYSTEM</span></div>
-    <section id="video-player" class="video-shell" aria-live="polite"><div class="video-title" id="video-title"></div><iframe id="video-frame" class="video-frame" title="BBSS SYSTEM video darsi" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="video-hint">Video havolasi vaqtinchalik. Darsga kirish huquqi serverda tekshiriladi.</div></section>
+    <section class="lesson-screen-header">
+      <div class="lesson-screen-title"><div class="course-label">LEARNING PATH / BBSS</div><h3>Kurs dasturi</h3><p id="lesson-course-description">Strategiyalaringizni darsma-dars rivojlantiring.</p></div>
+      <div class="lesson-screen-count"><strong id="lesson-progress-percent">0%</strong><span id="lesson-module-count">0 modul</span></div>
+    </section>
+    <div class="lesson-screen-progress"><div class="lesson-screen-progress-label"><span id="lesson-progress-count">0 dars</span><span id="lesson-progress-label">Progress yuklanmoqda</span></div><div class="lesson-screen-progress-track"><span id="lesson-progress-bar"></span></div></div>
+    <section id="video-player" class="video-shell" aria-live="polite">
+      <div class="video-meta-row"><span class="video-status-tag" id="video-status"><i></i> RUXSAT TEKSHIRILMOQDA</span><span class="video-module-label" id="video-module-label">BBSS COURSE</span></div>
+      <div class="video-title" id="video-title"></div>
+      <iframe id="video-frame" class="video-frame" title="BBSS SYSTEM video darsi" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div class="video-hint">Himoyalangan video oqimi · Darsga kirish serverda tekshiriladi</div>
+      <div class="lesson-video-controls" id="lesson-video-controls" hidden>
+        <button type="button" class="lesson-control-secondary" id="lesson-prev-btn" onclick="navigateVideoLesson(-1)">← Oldingi</button>
+        <button type="button" class="lesson-control-complete" id="lesson-complete-btn" onclick="completeActiveVideoLesson()">✓ Dars tugallandi</button>
+        <button type="button" class="lesson-control-secondary" id="lesson-next-btn" onclick="navigateVideoLesson(1)">Keyingi →</button>
+      </div>
+    </section>
     <section id="lesson-module-list" class="course-card"><div class="empty">Modullar yuklanmoqda…</div></section>
     <div class="note" id="lesson-note">Video darslar faqat Telegram orqali va ruxsat tekshiruvidan keyin ochiladi.</div>
   </main>
