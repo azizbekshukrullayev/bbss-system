@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const SITE_ORIGIN = 'https://azizbekshukrullayev.github.io';
-const APP_URL = 'https://azizbekshukrullayev.github.io/bbss-system/?v=20261025-liquid-glass-drag-1';
+const APP_URL = 'https://azizbekshukrullayev.github.io/bbss-system/?v=20261025-dashboard-lesson-polish-1';
 const COURSE_SLUG = 'bbss-trading-course';
 const BUNNY_LIBRARY_ID = '788308';
 const AVATAR_BUCKET = 'student-avatars';
