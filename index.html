@@ -262,7 +262,7 @@
     }
 
 </style>
-  <link rel="stylesheet" href="./bbss-theme.css?v=20261025-progress-completion-fix-1">
+  <link rel="stylesheet" href="./bbss-theme.css?v=20261101-security-hardening-1">
 </head>
 <body>
 <div class="app">
@@ -1821,7 +1821,7 @@
     const resumeButton = document.getElementById('home-resume-btn');
     if (resumeLesson) {
       if (resumeTitle) resumeTitle.textContent = resumeLesson.title || 'Video dars';
-      if (resumeMeta) resumeMeta.textContent = (resumeLesson.moduleTitle || 'BBSS COURSE') + ' · Video dars';
+      if (resumeMeta) resumeMeta.textContent = (resumeLesson.moduleTitle || 'THETRADE COURSE') + ' · Video dars';
       if (resumeKicker) resumeKicker.textContent = lastLessonId && String(lastLessonId) === String(resumeLesson.id)
         ? 'OXIRGI KO‘RILGAN DARS' : 'KEYINGI DARS';
       if (resumeButton) { resumeButton.disabled = false; resumeButton.removeAttribute('aria-disabled'); }
@@ -1893,7 +1893,7 @@
     const next = document.getElementById('lesson-next-btn');
     const complete = document.getElementById('lesson-complete-btn');
     const moduleLabel = document.getElementById('video-module-label');
-    if (moduleLabel) moduleLabel.textContent = lesson.moduleTitle || 'BBSS COURSE';
+    if (moduleLabel) moduleLabel.textContent = lesson.moduleTitle || 'THETRADE COURSE';
     if (previous) previous.disabled = index <= 0;
     if (next) next.disabled = index < 0 || index >= videos.length - 1;
     const completed = new Set(
@@ -3364,12 +3364,14 @@
 
   // Admin ilova ochiq turganda yangi so‘rovlar ko‘rinadi; studentga tasdiq berilgach katalog avtomatik ochiladi.
   setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
     if (!tg || !tg.initData) return;
     if (isAdminPreview) loadAdminAccessRequests(true);
     else if (accessRequired) loadCourseCatalog();
   }, 15000);
 
   setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
     if (chatIsViewActive('chat-hub-view')) loadChatDirectory(true);
     else if (chatIsViewActive('group-chat-view')) loadGroupChatMessages(true);
     else if (chatIsViewActive('direct-chat-view')) loadDirectChatMessages(true);
