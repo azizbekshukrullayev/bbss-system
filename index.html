@@ -1150,7 +1150,7 @@
       open.addEventListener('click',()=>{
         showScreen('lessons');
         if(lesson.content_type==='video') openVideoLesson(lesson);
-        else showToast('PDF materialini ochish hozircha kurs sahifasida qo‘llab-quvvatlanmaydi.');
+        else openPdfLesson(lesson);
       });
       const remove = learningEl('button','learning-mini-btn','Saqlanganlardan olib tashlash');
       remove.type='button';
@@ -1736,7 +1736,7 @@
           const action = document.createElement('button'); action.className = 'lesson-action';
           action.textContent = lesson.content_type === 'video' ? '▶ Ochish' : 'PDF';
           if (lesson.content_type !== 'video') {
-            action.addEventListener('click', () => showToast('PDF fayl hali saytga ulanmagan.'));
+            action.addEventListener('click', () => openPdfLesson(lesson));
           } else {
             action.addEventListener('click', () => openVideoLesson(lesson));
           }
@@ -3218,6 +3218,55 @@
       if (statusTag) { statusTag.classList.remove('is-loading','is-ready'); statusTag.classList.add('is-error'); statusTag.innerHTML = '<i></i> OQIM OCHILMADI'; }
       showToast(error && error.message ? error.message : 'Darsni ochib bo‘lmadi.');
       console.error('Video open error:', error);
+    }
+  }
+
+  async function openPdfLesson(lesson) {
+    if (!tg || !tg.initData) {
+      showToast('PDF materialini ochish uchun THETRADE botining ichidan kiring.');
+      return;
+    }
+    if (!db || !lesson || !lesson.id) {
+      showToast('PDF dars ma’lumoti topilmadi.');
+      return;
+    }
+
+    try {
+      const { data, error } = await db.functions.invoke('bbss-video-url', {
+        body: { action: 'pdf_url', initData: tg.initData, lessonId: String(lesson.id) }
+      });
+      if (error) {
+        let message = 'PDF havolasini olishda xatolik.';
+        try {
+          const responseBody = error.context && await error.context.json();
+          if (responseBody && typeof responseBody.error === 'string') message = responseBody.error;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      if (!data || data.ok !== true || typeof data.pdfUrl !== 'string') {
+        throw new Error((data && data.error) || 'Server PDF havolasini qaytarmadi.');
+      }
+
+      const signedUrl = new URL(data.pdfUrl);
+      const expectedOrigin = new URL(SUPABASE_URL).origin;
+      if (
+        signedUrl.origin !== expectedOrigin ||
+        !signedUrl.pathname.startsWith('/storage/v1/object/sign/bbss-course-materials/')
+      ) {
+        throw new Error('Server xavfsiz bo‘lmagan PDF havolasini qaytardi.');
+      }
+
+      rememberLastOpenedLesson(lesson);
+      if (typeof tg.openLink === 'function') {
+        tg.openLink(signedUrl.href);
+      } else {
+        window.location.assign(signedUrl.href);
+      }
+      showToast('PDF material ochilmoqda…');
+    } catch (error) {
+      const message = error && error.message ? error.message : 'PDF materialini ochib bo‘lmadi.';
+      showToast(message);
+      console.error('PDF open error:', error);
     }
   }
 
